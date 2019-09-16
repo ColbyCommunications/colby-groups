@@ -1,5 +1,5 @@
 {
-    "name": "colbycommunications/colby-groups",
+    "name": "colbycollege/colby-groups",
     "description": "Colby user group management plugin ",
     "keywords": [
         "wordpress"
@@ -17,7 +17,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "ColbyCommunications\\ColbyGroups\\": "src/"
+            "ColbyCollege\\Plugins\\ColbyGroups\\": "inc/classes"
         }
     }
 }
