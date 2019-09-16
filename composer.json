@@ -4,7 +4,7 @@
     "keywords": [
         "wordpress"
     ],
-    "type": "composer-plugin",
+    "type": "wordpress-plugin",
     "authors": [
         {
             "name": "Keith McGlauflin",
