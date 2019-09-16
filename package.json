@@ -1,0 +1,11 @@
+{
+  "name": "colbyGroups",
+  "version": "1.0.0",
+  "main": "colbyGroups.php",
+  "repository": "https://github.com/ColbyCommunications/colbyGroups.git",
+  "author": "Keith McGlauflin <keith.mcglauflin@colby.edu>",
+  "license": "MIT",
+  "devDependencies": {
+    "node-autodeploy-wp": "^1.0.20"
+  }
+}
