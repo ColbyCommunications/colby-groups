@@ -13,7 +13,12 @@
    Copyright (C) 2014-2015 Colby College - use with permission only!!!
 */
 
-use ColbyCollege\Plugins\ColbyGroups\{ColbyGroups, ColbyTicket, Capabilities, Dashboard};
+require "vendor/autoload.php";
+
+use ColbyCollege\Plugins\ColbyGroups\ColbyGroups;
+use ColbyCollege\Plugins\ColbyGroups\ColbyTicket;
+use ColbyCollege\Plugins\ColbyGroups\Capabilities;
+use ColbyCollege\Plugins\ColbyGroups\Dashboard;
 
 
 $colby_groups = new ColbyGroups();

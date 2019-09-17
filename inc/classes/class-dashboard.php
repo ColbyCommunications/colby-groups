@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 
-namespace ColbyCollege\Plugins\ColbyGroups\Dashboard;
+namespace ColbyCollege\Plugins\ColbyGroups;
 
 /**
  * Dashboard class.

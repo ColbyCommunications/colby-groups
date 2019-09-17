@@ -6,7 +6,7 @@
  * @since 1.0.0
  */
 
-namespace ColbyCollege\Plugins\ColbyGroups\Capabilities;
+namespace ColbyCollege\Plugins\ColbyGroups;
 
 /**
  * Capabilities class.

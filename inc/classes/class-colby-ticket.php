@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 
-namespace ColbyCollege\Plugins\ColbyTicket;
+namespace ColbyCollege\Plugins;
 
 // need functions for inserting/updating user in wordpress
 // require_once('/Users/bkwaltz/webroot/testColby2/wp-includes/registration.php');

@@ -5,10 +5,8 @@
  * @since 1.0.0
  */
 
-namespace ColbyCollege\Plugins\ColbyGroups\ColbyGroups;
+namespace ColbyCollege\Plugins\ColbyGroups;
 
-use ColbyCollege\Plugins\ColbyGroups\Capabilities;
-use ColbyCollege\Plugins\ColbyGroups\Dashboard;
 
 /**
  * ColbyGroups class.
