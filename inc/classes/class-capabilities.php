@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Class Capabilities
  *
@@ -32,8 +31,6 @@ class Capabilities {
         global $wpdb;
         global $post;
 
-        if ( CCG_DEBUG ) error_log( "CCG: checking capabilities " . ( count( $args ) == 3 ? "in post/page ID " . $args[3] : "in site" ) );
-
         $dbprefix = $wpdb->base_prefix;
         if ( get_current_blog_id() != 1 ) { $dbprefix .= get_current_blog_id() . '_'; }
 
@@ -41,7 +38,6 @@ class Capabilities {
 
         /* if post_id is passed in $args[2] use that in the WHERE clause to get perm for post as well the site */
         if ( count( $args ) == 3 ) {
-            if ( CCG_DEBUG ) error_log( "CCG: checking for AD group assigned to a post" );
             $post_clause = ' AND ( ' . $dbprefix . 'cc_group_roles.post_id=' . $args[2] . ' OR ' . $dbprefix . 'cc_group_roles.post_id=0 )';
         } else {
             $post_clause = ' AND ' . $dbprefix . 'cc_group_roles.post_id=0';
@@ -52,21 +48,14 @@ class Capabilities {
         $roles = $wpdb->get_results(
             "SELECT " . $dbprefix . "cc_group_roles.roles FROM " . $wpdb->base_prefix . "ccg_group_members JOIN " . $dbprefix . "cc_group_roles ON " . $wpdb->base_prefix . "ccg_group_members.group_id=" . $dbprefix . "cc_group_roles.group_id WHERE " . $wpdb->base_prefix . "ccg_group_members.user_id=" . $args[1] . $post_clause
         );
-        
-        if ( CCG_DEBUG ) error_log( "CCG: checking AD group roles" );
 
         if ( $roles ) {
-            if ( CCG_DEBUG )  error_log( "CCG: cool, we have roles!!!" );
             foreach ( $roles as $role ) {
-                if ( CCG_DEBUG ) error_log( "CCG: checking AD role " . $role->roles );
                 $grouproles = unserialize( $role->roles );
                 foreach ( $grouproles as $grouprole ) {
-                    if ( CCG_DEBUG ) error_log( "CCG: group role is $grouprole" );
                     foreach ( $cap as $mycap ) {
-                        if ( CCG_DEBUG ) error_log( "CCG: looking for capability $mycap" );
                         $roleperms = get_role( $grouprole );
                         if ( $roleperms->capabilities[ $mycap ] ) {
-                            if ( CCG_DEBUG ) error_log( "CCG: allowing this user to have this capability" );
                             $allcaps[$mycap] = TRUE;
                         }
                     }
@@ -74,7 +63,6 @@ class Capabilities {
             }
         }
         
-        if ( CCG_DEBUG ) error_log( "CCG: checking CC group roles" );
         
         /* get the Colby group roles (eg "faculty") for this user */
         if ( array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
@@ -86,22 +74,17 @@ class Capabilities {
             
             if ( $cookie[ 'profile' ] ) {
                 $in_clause = '';
-                if ( CCG_DEBUG ) error_log( "CCG: profile is " . $cookie[ 'profile' ] );
                 $cc_groups = explode( '/', $cookie[ 'profile' ] );
                 foreach ( $cc_groups as $cc_group ) {
-                    if ( CCG_DEBUG ) error_log( "CCG: profile group is " . $cc_group );
                     $in_clause .= $in_clause ? ", '$cc_group'" : "'$cc_group'";
                 }
-                
-                if ( CCG_DEBUG ) error_log( "CCG: in clause is $in_clause" );
                 
                 if ( $in_clause ) {
                     /* if post_id is passed in $args[2] use that in the WHERE clause to get perm for post as well the site */
                     
-                    if ( CCG_DEBUG ) error_log( "CCG: SELECT " . $dbprefix . "cc_group_roles.roles FROM " . $wpdb->base_prefix . "ccg_group_members JOIN " . $dbprefix . "cc_group_roles ON " . $wpdb->base_prefix . "ccg_group_members.group_id=" . $dbprefix . "cc_group_roles.group_id JOIN " . $wpdb->base_prefix . "ccg_groups ON " . $wpdb->base_prefix . "ccg_group_members.group_id=" . $wpdb->base_prefix . "ccg_groups.id WHERE " . $wpdb->base_prefix . "ccg_group_members.user_id=" . $args[1] . " AND group_type='CC'" );
+                   
 
                     if ( count( $args ) == 3 ) {
-                        if ( CCG_DEBUG ) error_log( "CCG: checking for Cc group assigned to a post" );
                         $post_clause = ' AND ( ' . $dbprefix . 'cc_group_roles.post_id=' . $args[2] . ' OR ' . $dbprefix . 'cc_group_roles.post_id=0 )';
                     } else {
                         $post_clause = ' AND ' . $dbprefix . 'cc_group_roles.post_id=0';
@@ -113,7 +96,6 @@ class Capabilities {
 
                     if ( $roles ) {
                         foreach ( $roles as $role ) {
-                            if ( CCG_DEBUG ) error_log( "CCG: checking CC role " . $role );
                             $grouproles = unserialize( $role->roles );
                             foreach ( $grouproles as $grouprole ) {
                                 foreach ( $cap as $mycap ) {
@@ -135,8 +117,6 @@ class Capabilities {
     public static function ccg_access_check() {
         global $wpdb;
         global $post;
-
-        if ( CCG_DEBUG ) error_log( "CCG: doing an access check - ccg_blog_public_colby_only is " . CCG_BLOG_PUBLIC_COLBY_ONLY );
 
         /* get the current user's ID */
         $user_ID = get_current_user_id();
@@ -176,11 +156,8 @@ class Capabilities {
             } else if ( '0' != get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true ) ) {
                 /* check this post, its parent page might be private */
                 
-                if ( CCG_DEBUG ) error_log( "CCG: checking the parent post, it might be limited" );
-                
                 list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
                 if ( true == $parent_limit ) {
-                    if ( CCG_DEBUG ) { error_log( "CCG: published post with limited parent ID " . $parent_id ); }
                     
                     $ad_read_ok = self::ad_user_can_read( $user_ID, $parent_limit, $parent_id );
                     $cc_read_ok = self::cc_user_can_read( $user_ID, $parent_limit, $parent_id );
@@ -218,8 +195,6 @@ class Capabilities {
     function ad_user_can_read( $user_ID, $post_limit, $post_id  ) {
         global $wpdb;
         
-        if ( CCG_DEBUG ) error_log( 'CCG: $post_limit is ' . $post_limit );
-        
         $dbprefix = $wpdb->base_prefix;
         if ( get_current_blog_id() != 1 ) { $dbprefix .= get_current_blog_id() . '_'; }
     
@@ -228,8 +203,6 @@ class Capabilities {
         if ( true == $post_limit ) {
             $post_id_sql = 'OR ' . $dbprefix . 'cc_group_roles.post_id=' . $post_id;
         }
-        
-        if ( CCG_DEBUG ) error_log( "CCG: post_id_sql is " . $post_id_sql );
     
         /* get AD group roles for this blog */
         $roles = $wpdb->get_row(
@@ -242,7 +215,6 @@ class Capabilities {
             /* error_log( "CCG: checked roles for " . $user_ID ); */
             foreach ( $roles as $role ) {
                 /* for each role, does this role have the read post capability? */
-                if ( CCG_DEBUG ) error_log( "CCG: checking capabilities of role " . $role );
                 $grouproles = unserialize( $role );
                 foreach ( $grouproles as $grouprole ) {
                     $roleperms = get_role( $grouprole );
@@ -254,8 +226,6 @@ class Capabilities {
                 }
             }
         }
-        
-        if ( CCG_DEBUG ) error_log( "CCG: The value for ad_read_ok is " . $read_ok );
         
         return $read_ok;
     }	/* ad_user_can_read */
@@ -319,7 +289,6 @@ class Capabilities {
             }
         }
         
-        if ( CCG_DEBUG ) error_log( "CCG: The value for cc_read_ok is " . $read_ok );
         
         return $read_ok;
     } /* ccg_user_can_read */
@@ -333,18 +302,15 @@ class Capabilities {
         /* get the current user's ID */
         $user_ID = get_current_user_id();
         
-        if ( CCG_DEBUG ) error_log( "CCG: 404 template initially set to "  . $template );
         
         if ( $blogs ) {
             foreach ( $blogs as $blog ) {
                 $which = count( $parts ) - 2;
-                if ( CCG_DEBUG ) error_log( "CCG: 404, switching to blog " . $blog->blog_id );
                 switch_to_blog( $blog->blog_id );
                 
-                if ( CCG_DEBUG ) error_log( "CCG: 404 path is " . $parts[ count( $parts ) - 2 ] );
                 /* $post = get_page_by_path( $parts[ count( $parts ) - 2 ] ); */
                 if ( preg_match( '/[a-zA-Z0-9]$/', $_SERVER['REQUEST_URI'] ) ) {
-                                            if ( CCG_DEBUG ) error_log( "CCG: end with alphanumeric");
+
                                             $post = get_page_by_path( $parts[ count( $parts ) - 1 ] );
                                     } else {
                                             $post = get_page_by_path( $parts[ count( $parts ) - 2 ] );
@@ -353,7 +319,6 @@ class Capabilities {
                 if ( $post ) {
                     if ( $user_ID ) {
                         /* user already logged in, just do a 403 */
-                        if ( CCG_DEBUG ) error_log( "CCG: error changed to 403 because logged in" );
                         return LOCATION_403;
                     } else {
                         /* user not logged in, redirect to the authentication page (401/412) */
@@ -361,13 +326,11 @@ class Capabilities {
                     }
                 } else {
                     /* no post/page for this post, just do the theme's 404 */
-                    if ( CCG_DEBUG ) error_log( "CCG: error changed to CCG's 404 because no page/post" );
                     return LOCATION_404;
                 }
             }
         } else {
             /* no site for this URL, just do the theme's 404 */
-            if ( CCG_DEBUG ) error_log( "CCG: error changed to CCG's 404 because no site" );
             return LOCATION_404;
         }
 
@@ -387,11 +350,6 @@ class Capabilities {
         //if ( in_array( 'editor', $user->roles) || in_array( 'editor' , $grouproles ) ) {
         // make sure the user or group role isn't administrator
         if ( ( !in_array( 'administrator', $grouproles ) && !in_array( 'administrator', $user->roles ) ) && ( in_array( 'acad_editor', $grouproles ) || in_array( 'acad_editor', $user->roles ) ) && !is_super_admin( $user->ID ) ) {
-
-            if ( CCG_DEBUG ) error_log( 'CCG: in_array("editor", $user->roles) is '.in_array('editor', $user->roles) );
-            if ( CCG_DEBUG ) error_log( 'CCG: in_array("administrator", $grouproles) is '.in_array('administrator', $grouproles) );
-            if ( CCG_DEBUG ) error_log( 'CCG: in_array("editor", $grouproles) is '.in_array('editor', $grouproles) );
-            if ( CCG_DEBUG ) error_log( 'CCG: in_array("administrator", $user->roles) is '.in_array('administrator', $user->roles) );
 
             // Editors shouldn't be able to edit the front page...
             if( $post->ID == get_option('page_on_front') && $_GET['action'] == 'edit' ) {
@@ -414,7 +372,6 @@ class Capabilities {
     }	/* prevent_editor_frontpage */
 
     public static function ccg_switch_to_user( $newuser, $olduser ) {
-        if ( CCG_DEBUG ) error_log( 'CCG: switching from '.$olduser.' to '.$newuser );
         
         // Get the username for the current user
         $user = get_user_by( 'id', $newuser );
@@ -427,8 +384,6 @@ class Capabilities {
         global $wpdb;
         global $post;
         
-        if ( CCG_DEBUG ) error_log( "CCG: getting group roles for user ID " . $user_ID . " and post ID " . $post->ID );
-        
         $user_group_roles = array();
         
         $dbprefix = $wpdb->base_prefix;
@@ -439,8 +394,6 @@ class Capabilities {
         if ( '' != $post->ID ) {
             $post_id_sql = 'OR ' . $dbprefix . 'cc_group_roles.post_id=' . $post->ID;
         }
-        
-        if ( CCG_DEBUG ) error_log( "CCG: post_id_sql is " . $post_id_sql );
     
         /* get AD group roles for this blog */
         $roles = $wpdb->get_results(
@@ -454,7 +407,6 @@ class Capabilities {
                 /* for each role, store it as a group role */
                 $grouproles = unserialize( $role->roles );
                 foreach ( $grouproles as $grouprole ) {
-                    if ( CCG_DEBUG ) error_log( "CCG: adding group role " . $role->roles );
                     array_push( $user_group_roles, $grouprole );
                 }
             }
@@ -496,18 +448,12 @@ class Capabilities {
                             /* error_log( "CCG: checking CC role " . $role ); */
                             $grouproles = unserialize( $role->roles );
                             foreach ( $grouproles as $grouprole ) {
-                                if ( CCG_DEBUG ) error_log( "CCG: adding group role " . $role );
                                 array_push( $user_group_roles, $grouprole );
                             }
                         }
                     }
                 }
             }
-        }
-        
-        if ( CCG_DEBUG && count( $user_group_roles ) ) {
-            error_log( "CCG: group roles for " . $user_ID );
-            foreach ( $user_group_roles as $ugr ) { error_log( "CCG: *** " . $ugr ); }
         }
         
         return $user_group_roles;

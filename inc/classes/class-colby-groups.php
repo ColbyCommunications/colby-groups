@@ -7,7 +7,6 @@
 
 namespace ColbyCollege\Plugins\ColbyGroups;
 
-
 /**
  * ColbyGroups class.
  *
@@ -21,17 +20,14 @@ class ColbyGroups {
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-        add_action( 'plugins_loaded', [ $this, 'load' ], -10, 0);
         add_action( 'delete_blog', [ $this, 'delete_blog' ] );
         add_action( 'wpmu_new_blog', [ $this, 'activate' ] );
     }
 
-    public function activate() {
+    public static function activate() {
         global $wpdb;
-        
-        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
     
-        $blogs=array();
+        $blogs = array();
         
         if ( $network_wide ) {
             /* create an array of all of the blogs on this network */
@@ -85,8 +81,11 @@ class ColbyGroups {
         dbDelta( $sql );
         
         foreach ( $blogs as $blog ) {
-            if ( $blog != 1 ) { $table_name = $wpdb->base_prefix . $blog . '_cc_group_roles'; }
-                else { $table_name = $wpdb->base_prefix . 'cc_group_roles'; }
+            if ( $blog != 1 ) { 
+                $table_name = $wpdb->base_prefix . $blog . '_cc_group_roles'; 
+            } else { 
+                $table_name = $wpdb->base_prefix . 'cc_group_roles'; 
+            }
         
             $sql = "CREATE TABLE $table_name (
                 ID bigint(20) NOT NULL AUTO_INCREMENT,
@@ -108,7 +107,6 @@ class ColbyGroups {
 		
 		if ( $currentuser && $ccg_user_roles ) {
 			foreach ( $ccg_user_roles as $role ) {
-				/* error_log( "CCG: restoring original user role to $role for " . $currentuser->user_login ); */
 				$currentuser->set_role( strtolower( $role ) );
 			}
 		}
@@ -123,6 +121,4 @@ class ColbyGroups {
         $stmt = 'DROP TABLE ' . $dbprefix . 'cc_group_roles';
         $wpdb->query( $stmt );
     }
-	
-
 }

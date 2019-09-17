@@ -18,7 +18,7 @@ class Dashboard {
 	 *
 	 * @since 1.0.0
 	 */
-	public function __construct() {
+	public function __construct() { 
         add_action( 'admin_menu', [ $this, 'menus' ] );
         add_action( 'blog_privacy_selector', [ $this, 'add_privacy_options' ] );
         add_action( 'add_meta_boxes', [ $this, 'colbygroups_add_meta_box' ] );
@@ -33,7 +33,7 @@ class Dashboard {
     }
 
     public static function menus() {
-        add_submenu_page( 'users.php', __('Colby Groups', 'CCG_Dashboard'), __('Colby Groups', 'CCG_Dashboard'), 'remove_users', 'colbyGroups/colbyGroups.php', array('CCG_Dashboard','menu_processing') );
+        add_submenu_page( 'users.php', 'Colby Groups Administration', 'Colby Groups', 'remove_users', 'colbyGroups/colbyGroups.php', [ $this,'menu_processing' ] );
     }
 
     public static function menu_processing( $post_id = 0 ) {
@@ -54,7 +54,6 @@ class Dashboard {
         /* handle adding a group to the current blog */
         if ( isset( $_POST['group'] ) ) {
             foreach ( $_POST['group'] as $newgroup ) {
-                if ( CCG_DEBUG ) error_log( "Adding group ID " . $newgroup . " to " . get_current_blog_id() );
                 $new_role=serialize(array($_POST['role']));
                 $data=array( 'group_id' => $newgroup,
                                 'roles' => $new_role,
@@ -81,7 +80,7 @@ EOT;
         echo "<div class='wrap'>";
 
         if ( $post_id == 0 ) {
-            echo "<h2>Colby Groups</h2>";
+            echo "<h2>Colby Groups Administration</h2>";
             echo "<p>The active directory groups below have the listed roles for this site. Adding users to a group or creating new groups must be done in the CX database.</p>";
             echo "<form method='post'>";
             echo '<div class="alignleft actions bulkactions"><select name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="submit" name="" id="doaction" class="button action" value="Apply" /></div><br/>';
@@ -185,7 +184,7 @@ EOT;
                     add_meta_box(
                             'colbygroups_perms_id',
                             'Colby Groups',
-                            array( 'CCG_Dashboard', 'colbygroups_perms_callback' ),
+                            [ $this, 'colbygroups_perms_callback' ],
                             $screen
                     );
             }
@@ -212,7 +211,6 @@ EOT;
             }
         
             $limited = get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true );
-            if ( CCG_DEBUG ) error_log( "CCG: public_checked is " . $public_checked );
             if ( '0' == $limited ) { $public_checked = 'checked="yes"'; }
                 else { $public_checked = ''; }
         
@@ -417,7 +415,6 @@ EOT;
             'ccg_publicly_viewable',
             $_POST['ccg_publicly_viewable'] && 'on' === $_POST['ccg_publicly_viewable']
         );
-        //if ( CCG_DEBUG ) error_log( "CCG: setting the groups for page ID ".$post_id );
         
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
             return;
@@ -425,13 +422,10 @@ EOT;
         /* if the parent is restricted... */
         list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
         if ( 'true' == $parent_limit ) {
-            if ( CCG_DEBUG ) error_log( "CCG: this post has a limited parent" );
             /* ...and the public override input is not specified delete the public override setting */
             if ( empty( $_POST[ 'ccg_public' ] ) ) {
-                if ( CCG_DEBUG ) error_log( "CCG: ccg_public is not set" );
                 delete_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, 0 );
             } else if ( '1' == $_POST[ 'ccg_public' ] && '1' != $_POST['ccg_limit_groups'] ) {
-                if ( CCG_DEBUG ) error_log( "CCG: ccg_public is set" );
                 add_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, 0, true ) || update_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, 0 );
             }
         
@@ -440,7 +434,6 @@ EOT;
         
         if ( empty( $_POST[ 'ccg_limit_groups' ] ) || '1' != $_POST['ccg_limit_groups'] ) {
             /* not limiting this page by Colby groups */
-            if ( CCG_DEBUG ) error_log( "CCG: restrict to groups checkbox not checked - " . $_POST['ccg_limit_groups'] );
             delete_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, true );
             return;
         }
@@ -456,7 +449,6 @@ EOT;
             $wpdb->prepare( "SELECT " . $dbprefix . "cc_group_roles.roles, " . $dbprefix . "cc_group_roles.ID, ".$wpdb->base_prefix."ccg_groups.group_name, ".$wpdb->base_prefix."ccg_groups.ID as group_id FROM ".$wpdb->base_prefix."ccg_groups JOIN " . $dbprefix . "cc_group_roles ON ".$wpdb->base_prefix."ccg_groups.ID=" . $dbprefix . 'cc_group_roles.group_id WHERE ' . $dbprefix . 'cc_group_roles.post_id=' . $post_id . ' ORDER BY '.$wpdb->base_prefix."ccg_groups.group_name", ARRAY_N )
         );
         
-        //if ( CCG_DEBUG ) error_log( "CCG: comparing new groups to saved groups" );
         if ( $savedGroups ) {
             foreach ( $savedGroups as $oldGroup ) {
                 /* for each currently assigned group, delete those that are not in the new groups list */
@@ -480,7 +472,6 @@ EOT;
         
         if ( array_key_exists( 'group', $_POST ) ) {
             foreach ( $_POST['group'] as $group ) {
-                //if ( CCG_DEBUG ) error_log( "CCG: the group ID to assign is ".$group );
                 $oldGroupFound = 0;
                 $oldGroupRole = '';
                 $oldGroupID = 0;
@@ -502,8 +493,6 @@ EOT;
                     /* if no old group then add the new group */
                     $newGroupRoleSerialized = serialize( array($newGroupRole) );
                 
-                    //if ( CCG_DEBUG ) error_log( "CCG: new group $newGroupID with role $newGroupRoleSerialized" );
-                
                     $data=array( 
                         'group_id' => $newGroupID,
                         'roles' => $newGroupRoleSerialized,
@@ -516,7 +505,6 @@ EOT;
                 
                     /* update the role if different from the old role */
                     if ( $newGroupRoleSerialized != $oldGroupRole ) {
-                        //if ( CCG_DEBUG ) error_log( "CCG: the role for this group needs to be updated to $newGroupRoleSerialized" );
                         $wpdb->update( $dbprefix . "cc_group_roles", 
                                         array( 'roles' => $newGroupRoleSerialized ),
                                         array( 'ID' => $oldGroupID ),
@@ -527,8 +515,6 @@ EOT;
                 }
             }
         }
-        
-        //if ( CCG_DEBUG ) error_log( "CCG: done setting page group permissions" );
     }
     
     public static function add_privacy_options( $options ) {

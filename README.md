@@ -1,3 +1,3 @@
-# ColbyGroups
+# colby-groups
 
-Production should be on `prod` branch
+This is the composer colby-groups package for Platform.sh

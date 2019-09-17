@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 
-namespace ColbyCollege\Plugins;
+namespace ColbyCollege\Plugins\ColbyGroups;
 
 // need functions for inserting/updating user in wordpress
 // require_once('/Users/bkwaltz/webroot/testColby2/wp-includes/registration.php');
@@ -27,13 +27,14 @@ class ColbyTicket {
 	 * @since 1.0.0
 	 */
 	public function __construct( ) {
-		add_action('set_current_user', array($this,'ticketCheck'));
-        add_action('wp_authenticate', array($this,'authenticate'));
-        add_action('wp_logout', array($this,'logout'));
-        add_action('login_form', array($this,'login_form'));
-        add_action('lost_password', array($this,'disable_function'));
-        add_action('retrieve_password', array($this,'disable_function'));
-        add_action('password_reset', array($this,'disable_function'));
+      add_action('set_current_user', array($this,'ticketCheck'));
+      add_action('wp_authenticate', array($this,'authenticate'));
+      add_action('wp_logout', array($this,'logout'));
+      add_action('login_form', array($this,'login_form'));
+  
+      add_action('lost_password', array($this,'disable_function'));
+      add_action('retrieve_password', array($this,'disable_function'));
+      add_action('password_reset', array($this,'disable_function'));
     }
 
     // if the user is not logged in but has a ColbyTicket cookie, log them in
@@ -42,7 +43,6 @@ class ColbyTicket {
         global $user_ID;
 
         // get the current user
-        //get_currentuserinfo();
         $user = wp_get_current_user();
         $user_ID = $user->ID;
 

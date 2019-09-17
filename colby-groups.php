@@ -13,7 +13,10 @@
    Copyright (C) 2014-2015 Colby College - use with permission only!!!
 */
 
-require "vendor/autoload.php";
+require plugin_dir_path( __FILE__ ) . '/inc/classes/class-colby-groups.php';
+require plugin_dir_path( __FILE__ ) . '/inc/classes/class-colby-ticket.php';
+require plugin_dir_path( __FILE__ ) . '/inc/classes/class-capabilities.php';
+require plugin_dir_path( __FILE__ ) . '/inc/classes/class-dashboard.php';
 
 use ColbyCollege\Plugins\ColbyGroups\ColbyGroups;
 use ColbyCollege\Plugins\ColbyGroups\ColbyTicket;
@@ -26,5 +29,5 @@ $colby_ticket = new ColbyTicket();
 $colby_groups_capabilities = new Capabilities();
 $colby_groups_dashboard = new Dashboard();
 
-register_activation_hook( [ $colby_groups(), 'plugin_activate' ] );
+register_activation_hook( __FILE__, [ $colby_groups, 'plugin_activate' ] );
 

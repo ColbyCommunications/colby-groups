@@ -4,7 +4,7 @@
     "keywords": [
         "wordpress"
     ],
-    "type": "wordpress-plugin",
+    "type": "wordpress-muplugin",
     "authors": [
         {
             "name": "Keith McGlauflin",
