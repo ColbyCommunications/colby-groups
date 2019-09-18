@@ -31,7 +31,7 @@ function colby_groups_init() {
   $colby_groups_capabilities = new Capabilities();
   $colby_groups_dashboard = new Dashboard();
 
-  register_activation_hook( __FILE__, [ $colby_groups, 'plugin_activate' ] );
+  register_activation_hook( __FILE__, [ $colby_groups, 'activate' ] );
 }
 
 
