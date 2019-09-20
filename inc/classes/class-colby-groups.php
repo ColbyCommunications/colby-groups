@@ -25,6 +25,8 @@ class ColbyGroups {
     }
 
     public static function activate() {
+
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
         global $wpdb;
     
         $blogs = array();
