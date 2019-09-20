@@ -23,15 +23,15 @@ use ColbyCollege\Plugins\ColbyGroups\ColbyTicket;
 use ColbyCollege\Plugins\ColbyGroups\Capabilities;
 use ColbyCollege\Plugins\ColbyGroups\Dashboard;
 
-add_action( 'colby_groups_loaded', 'colby_groups_init' );
+// add_action( 'colby_groups_loaded', 'colby_groups_init' );
 
-function colby_groups_init() {
-	$colby_groups = new ColbyGroups();
-  $colby_ticket = new ColbyTicket();
-  $colby_groups_capabilities = new Capabilities();
-  $colby_groups_dashboard = new Dashboard();
+// function colby_groups_init() {
+$colby_groups = new ColbyGroups();
+$colby_ticket = new ColbyTicket();
+$colby_groups_capabilities = new Capabilities();
+$colby_groups_dashboard = new Dashboard();
 
-  register_activation_hook( __FILE__, [ $colby_groups, 'activate' ] );
-}
+register_activation_hook( __FILE__, [ $colby_groups, 'activate' ] );
+// }
 
 
