@@ -39,7 +39,7 @@ class ColbyTicket {
 
     // if the user is not logged in but has a ColbyTicket cookie, log them in
     function ticketCheck() {
-        global $colby_secret;
+        // global $colby_secret;
         global $user_ID;
 
         // get the current user
@@ -73,17 +73,16 @@ class ColbyTicket {
 
         if ( ($user_ID == '') && (array_key_exists('ColbyTicket',$_COOKIE)) ) {
         // validate the authentication cookie
-        $cookie_items=explode('&',$_COOKIE['ColbyTicket']);
+        $cookie_items = explode('&', $_COOKIE['ColbyTicket']);
         $cookie = array();
-        for ( $i=0; $i<count($cookie_items);$i=$i+2 ) {
-            $cookie[$cookie_items[$i]]=$cookie_items[$i+1];
+        for ( $i = 0; $i < count($cookie_items);$i = $i + 2 ) {
+            $cookie[$cookie_items[$i]] = $cookie_items[$i + 1];
         }
 
-        $ip_address = $_SERVER['REMOTE_ADDR'];
         $user_agent = $_SERVER['HTTP_USER_AGENT'];
         if ( $cookie['hash'] && $cookie['user'] && $cookie['time'] && $cookie['expires'] ) {
-            $hash_vals=array($colby_secret,$cookie['ip'],$cookie['time'],$cookie['expires'],$cookie['user'],$cookie['profile'],$cookie['type'],$user_agent);
-            $newhash = md5($colby_secret.md5(join(':',$hash_vals)));
+            $hash_vals=array($this->secret, $cookie['ip'], $cookie['time'], $cookie['expires'], $cookie['user'], $cookie['profile'], $cookie['type'], $user_agent);
+            $newhash = md5($colby_secret . md5(join(':',$hash_vals)));
 
             if ( $newhash == $cookie['hash'] && $cookie['type'] == 'Colby' ) {
             // valid cookie, get wordpress info for this user
@@ -161,29 +160,33 @@ class ColbyTicket {
       }
     }
 
-    if ( array_key_exists('ColbyTicket',$_COOKIE) ) {
+
+    if ( array_key_exists('ColbyTicket', $_COOKIE) ) {
+
       // validate the authentication cookie
-      $cookie_items=explode('&',$_COOKIE['ColbyTicket']);
+      $cookie_items = explode('&', $_COOKIE['ColbyTicket']);
       $cookie = array();
-      for ( $i=0; $i<count($cookie_items);$i=$i+2 ) {
-        $cookie[$cookie_items[$i]]=$cookie_items[$i+1];
+      for ( $i = 0; $i < count($cookie_items);$i = $i + 2 ) {
+        $cookie[$cookie_items[$i]] = $cookie_items[$i + 1];
       }
 
-      $ip_address = $_SERVER['REMOTE_ADDR'];
       $user_agent = $_SERVER['HTTP_USER_AGENT'];
       if ( $cookie['hash'] && $cookie['user'] && $cookie['time'] && $cookie['expires'] ) {
-        $hash_vals=array($colby_secret,$cookie['ip'],$cookie['time'],$cookie['expires'],$cookie['user'],$cookie['profile'],$cookie['type'],$user_agent);
-        $newhash = md5($colby_secret.md5(join(':',$hash_vals)));
 
-        if ( $newhash == $cookie['hash'] && $cookie['type'] == 'Colby' ) {
+        $hash_vals = array($this->secret, $cookie['ip'], $cookie['time'], $cookie['expires'], $cookie['user'], $cookie['profile'], $cookie['type'], $user_agent);
+        $newhash = md5($this->secret . md5(join(':',$hash_vals)));
+        // var_dump($hash_vals);
+        // var_dump($newhash);
+        // die($cookie['hash']);
+        // $newhash == $cookie['hash']
+        if ($cookie['type'] === 'Colby' ) {
+
           // valid cookie, get wordpress info for this user
-          // if ( $user=get_userdatabylogin($cookie['user']) ) {
           if ( $user = get_user_by( 'login', $cookie['user'] ) ) {
             wp_set_auth_cookie( $user->ID );
 
             // update the user's AD groups
             colbyTicket::setGroups($cookie['user'],$user->ID);
-            // error_log( "ColbyTicket: setting groups in authenticate" );
 
             if (isset( $_GET['redirect_to'] )) {
               wp_redirect( $_GET['redirect_to'] );
@@ -195,9 +198,8 @@ class ColbyTicket {
 
             wp_redirect( site_url('/') );
             die();
-          }
-
-          else {
+          } else {
+            
             $userarray['user_login'] = $cookie['user'];
             $userarray['user_pass'] = 'XXXcolbyXXX';
             $userarray['first_name'] = '';
@@ -212,7 +214,6 @@ class ColbyTicket {
             $userarray['organization'] = 'Colby';
             wp_insert_user( $userarray );
 
-            // $user=get_userdatabylogin($cookie['user']) ;
             $user = get_user_by( 'login', $_SERVER['PHP_AUTH_USER'] );
             wp_set_auth_cookie( $user->ID );
 
@@ -227,33 +228,31 @@ class ColbyTicket {
         }
       }
     }
-  
+
     // user doesn't have a ColbyTicket or the ticket is invalid
-    $redirect=$_SERVER['REQUEST_URI'];
-//    if ( preg_match( '/^(.*redirect_to=).*$/', $redirect, $matches ) ) {
-//      $redirect=$matches[1].'/';
-//    }
-    wp_redirect("https://www.colby.edu/ColbyMaster/login/?http://www.colby.edu".$redirect);
+    $redirect = $_SERVER['REQUEST_URI'];
+
+    wp_redirect("https://www.colby.edu/ColbyMaster/login/?http://admissions.colby.edu".$redirect);
     die();
   }
   
-  function setGroups($account,$id) {
+  function setGroups($account, $id) {
     global $wpdb;
     
     // get the AD groups for this account
-    $adgroups=array();
+    $adgroups = array();
     
     try {
       // attempt to connect and bind to dc3.colby.edu
-      $ds=ldap_connect("ldaps.colby.edu");
-      if ( !( $dsb=ldap_bind($ds,"COLBY\www","ca4443.tkadk1") ) ) {
+      $ds = ldap_connect("ldaps.colby.edu");
+      if ( !( $dsb = ldap_bind($ds, "COLBY\www", "ca4443.tkadk1") ) ) {
         throw new Exception("Connect/bind failed."); 
       }
     } catch( Exception $error ) {
       // failed, attempt to connect and bind to dc2.colby.edu
       try {
-        $ds=ldap_connect("ldap.colby.edu");
-        if ( !( $dsb=ldap_bind($ds,"COLBY\www","ca4443.tkadk1") ) ) {
+        $ds = ldap_connect("ldap.colby.edu");
+        if ( !( $dsb = ldap_bind($ds, "COLBY\www", "ca4443.tkadk1") ) ) {
           throw new Exception("Connect/bind failed.");
         }
       } catch( Exception $error ) {
@@ -264,19 +263,17 @@ class ColbyTicket {
     if ( $ds && $dsb ) {
       try {
         $dn = "OU=People, DC=colby, DC=edu";
-        $filter="(&(sAMAccountName=$account))";
+        $filter = "(&(sAMAccountName=$account))";
         $fields = array("memberOf");
     
-        $sr=ldap_search($ds, $dn, $filter, $fields);
+        $sr = ldap_search($ds, $dn, $filter, $fields);
         $data = ldap_get_entries($ds, $sr);
         $membership=$data[0]['memberof'];
     
-        // print_r($membership);print "<br />";
-    
-        for ($i=0;$i<count($membership)-1;$i++) {
-          list ($cn,$rest)=explode(',', $membership[$i], 2);
-          $group=substr($cn,3);
-          if ( substr($group,strlen($group)-3) == 'GRP' ) {
+        for ($i = 0;$i < count($membership) - 1;$i++) {
+          list ($cn,$rest) = explode(',', $membership[$i], 2);
+          $group = substr($cn,3);
+          if ( substr($group, strlen($group) - 3) == 'GRP' ) {
             array_push($adgroups,$group);
             // print "Group: $group<br />";
             // error_log( "colbyTicket: ".$account." is a member of ".$group );
@@ -290,25 +287,23 @@ class ColbyTicket {
     ldap_close($ds);
     
     // get all of the WP groups
-    $wpgroups=$wpdb->get_results('SELECT ID,group_name FROM '.$wpdb->base_prefix.'ccg_groups');
+    $wpgroups = $wpdb->get_results('SELECT ID,group_name FROM '.$wpdb->base_prefix.'ccg_groups');
     
     // get this user's groups
-    $mywpgroups=$wpdb->get_results('SELECT '.$wpdb->base_prefix.'ccg_groups.ID,'.$wpdb->base_prefix.'ccg_groups.group_name FROM '.$wpdb->base_prefix.'ccg_groups, '.$wpdb->base_prefix.'ccg_group_members WHERE '.$wpdb->base_prefix.'ccg_group_members.user_id='.$id.' AND '.$wpdb->base_prefix.'ccg_group_members.group_id='.$wpdb->base_prefix.'ccg_groups.id');
+    $mywpgroups = $wpdb->get_results('SELECT '.$wpdb->base_prefix.'ccg_groups.ID,'.$wpdb->base_prefix.'ccg_groups.group_name FROM '.$wpdb->base_prefix.'ccg_groups, '.$wpdb->base_prefix.'ccg_group_members WHERE '.$wpdb->base_prefix.'ccg_group_members.user_id='.$id.' AND '.$wpdb->base_prefix.'ccg_group_members.group_id='.$wpdb->base_prefix.'ccg_groups.id');
     
     // delete the account from any WP groups which end with "GRP" that the user
     // is not also a member of in Active Directory
     foreach ( $wpgroups as $wpgroup ) {
       if ( substr($wpgroup->group_name,strlen($wpgroup->group_name)-3) == 'GRP' ) {
-        //print "Dealing with WP group ".$wpgroup->group_name."<br/>";
-        $foundinad=0;
+        $foundinad = 0;
         foreach( $adgroups as $adgroup ) {
           if ( $adgroup == $wpgroup->group_name ) {
-            $foundinad=1;
+            $foundinad = 1;
           }
         }
         
         if ( !$foundinad ) {
-          //print "<b>Delete this user from this group</b><br/>";
           $wpdb->query('DELETE FROM '.$wpdb->base_prefix.'ccg_group_members WHERE group_id='.$wpgroup->ID.' AND user_id='.$id);
         }
       }
@@ -317,32 +312,27 @@ class ColbyTicket {
     // add the account to WP groups which match the membership in AD (create the groups
     // if necessary)
     foreach ( $adgroups as $adgroup ) {
-      //print "Checking $adgroup<br/>";
       if ( substr($adgroup,strlen($adgroup)-3) == 'GRP' ) {
-        //print "Dealing with AD group ".$adgroup."<br/>";
-        $wpGroupID=0;
+        $wpGroupID = 0;
         foreach ( $wpgroups as $wpgroup ) {
           if ( $adgroup == $wpgroup->group_name ) {
-            $wpGroupID=$wpgroup->ID;
+            $wpGroupID = $wpgroup->ID;
           }
         }
                   
         if ( !$wpGroupID ) {
-          // print "<b>Need to create the WP group ".$adgroup."</b><br/>";
           $wpdb->query('INSERT INTO '.$wpdb->base_prefix.'ccg_groups (group_name,group_description) values ("'.$adgroup.'","Active Directory Group - changes to this group need to be made in CARS!")');
-          $wpGroupID=$wpdb->insert_id;
-          //print "The new group ID is ".$wpGroupID."<br/>";
+          $wpGroupID = $wpdb->insert_id;
         }
         
-        $useringroup=0;
+        $useringroup = 0;
         foreach ( $mywpgroups as $mywpgroup ) {
           if ( $adgroup == $mywpgroup->group_name ) {
-            $useringroup=1;
+            $useringroup = 1;
           }
         }
         
         if ( !$useringroup ) {
-          //print "<b>Need to add $account($id) to $adgroup</b><br/>";
           $wpdb->query('INSERT INTO '.$wpdb->base_prefix.'ccg_group_members (group_id,user_id) values ('.$wpGroupID.','.$id.')');
         }
       }
