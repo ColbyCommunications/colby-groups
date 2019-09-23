@@ -27,8 +27,9 @@ class ColbyTicket {
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-    die(var_dump(getenv('HAS_PROD')));
-    // if ("ON" === getenv('LANDO') && ( && true === getenv('HAS_PROD'))) {
+
+    // if LANDO or PROD or Platform dev environment with prod environment
+    if ("ON" === getenv('LANDO') || "https://". $_SERVER['HTTP_HOST'] === "https://" . getenv('PRIMARY_DOMAIN') || (false !== getenv('PLATFORM_RELATIONSHIPS' && true === getenv('HAS_PROD')))) {
       add_action('set_current_user', [ $this, 'ticketCheck' ]);
       add_action('wp_authenticate', [ $this, 'authenticate' ]);
       add_action('wp_logout', [ $this, 'logout' ]);
@@ -36,22 +37,8 @@ class ColbyTicket {
       add_action('lost_password', [ $this, 'disable_function' ]);
       add_action('retrieve_password', [ $this, 'disable_function' ]);
       add_action('password_reset', [ $this, 'disable_function' ]);
-
       add_action( 'rest_api_init', [ $this,  'register_routes' ] );
-
-    // } 
-    // are we on platform?
-    // if (false !== getenv('PLATFORM_RELATIONSHIPS') && true === getenv('HAS_PROD')) {
-    //   add_action( 'rest_api_init', [ $this,  'register_routes' ] );
-    // }
-    //   add_action('set_current_user', [ $this, 'ticketCheck' ]);
-    //   add_action('wp_authenticate', [ $this, 'authenticate' ]);
-    //   add_action('wp_logout', [ $this, 'logout' ]);
-    //   add_action('login_form', [ $this, 'login_form' ]);
-    //   add_action('lost_password', [ $this, 'disable_function' ]);
-    //   add_action('retrieve_password', [ $this, 'disable_function' ]);
-    //   add_action('password_reset', [ $this, 'disable_function' ]);
-    
+    }
   }
 
   function getCookieValues() {
@@ -255,7 +242,8 @@ class ColbyTicket {
       }
     }
 
-    if ("ON" !== getenv('LANDO') && false !== getenv('PLATFORM_RELATIONSHIPS') && true === getenv('HAS_PROD')) {
+    // if !LANDO && !PROD && platform dev environment with prod
+    if ("ON" !== getenv('LANDO') && "https://". $_SERVER['HTTP_HOST'] !== "https://" . getenv('PRIMARY_DOMAIN')) {
       // no cookie, need to get it from prod
       $response = $this->colby_groups_request_cookie_values();
 
@@ -267,7 +255,7 @@ class ColbyTicket {
         die();
       } else {
         // need to show prod login form here...or at least a message
-        die("Try logging in on production (https://getenv('PRIMARY_DOMAIN'}) and trying the page your requested again again");
+        die("Try logging in on production (https://{getenv('PRIMARY_DOMAIN'}) and trying the page your requested again again");
       }
     } else {
       // user doesn't have a ColbyTicket or the ticket is invalid
