@@ -242,7 +242,7 @@ class ColbyTicket {
         }
       }
     }
-    if (false !== getenv('PLATFORM_RELATIONSHIPS') && getenv('HAS_PROD')) {
+    if (false !== getenv('PLATFORM_RELATIONSHIPS') && true === getenv('HAS_PROD')) {
       // no cookie, need to get it from prod
       $response = $this->colby_groups_request_cookie_values();
 
