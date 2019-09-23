@@ -27,11 +27,8 @@ class ColbyTicket {
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-
-    // are we on platform?
-    if (false !== getenv('PLATFORM_RELATIONSHIPS') && getenv('HAS_PROD')) {
-      add_action( 'rest_api_init', [ $this,  'register_routes' ] );
-    }
+    die(var_dump(getenv('HAS_PROD')));
+    // if ("ON" === getenv('LANDO') && ( && true === getenv('HAS_PROD'))) {
       add_action('set_current_user', [ $this, 'ticketCheck' ]);
       add_action('wp_authenticate', [ $this, 'authenticate' ]);
       add_action('wp_logout', [ $this, 'logout' ]);
@@ -39,6 +36,21 @@ class ColbyTicket {
       add_action('lost_password', [ $this, 'disable_function' ]);
       add_action('retrieve_password', [ $this, 'disable_function' ]);
       add_action('password_reset', [ $this, 'disable_function' ]);
+
+      add_action( 'rest_api_init', [ $this,  'register_routes' ] );
+
+    // } 
+    // are we on platform?
+    // if (false !== getenv('PLATFORM_RELATIONSHIPS') && true === getenv('HAS_PROD')) {
+    //   add_action( 'rest_api_init', [ $this,  'register_routes' ] );
+    // }
+    //   add_action('set_current_user', [ $this, 'ticketCheck' ]);
+    //   add_action('wp_authenticate', [ $this, 'authenticate' ]);
+    //   add_action('wp_logout', [ $this, 'logout' ]);
+    //   add_action('login_form', [ $this, 'login_form' ]);
+    //   add_action('lost_password', [ $this, 'disable_function' ]);
+    //   add_action('retrieve_password', [ $this, 'disable_function' ]);
+    //   add_action('password_reset', [ $this, 'disable_function' ]);
     
   }
 
@@ -242,7 +254,8 @@ class ColbyTicket {
         }
       }
     }
-    if (false !== getenv('PLATFORM_RELATIONSHIPS') && true === getenv('HAS_PROD')) {
+
+    if ("ON" !== getenv('LANDO') && false !== getenv('PLATFORM_RELATIONSHIPS') && true === getenv('HAS_PROD')) {
       // no cookie, need to get it from prod
       $response = $this->colby_groups_request_cookie_values();
 
