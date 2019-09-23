@@ -37,6 +37,8 @@ class ColbyTicket {
       add_action('lost_password', [ $this, 'disable_function' ]);
       add_action('retrieve_password', [ $this, 'disable_function' ]);
       add_action('password_reset', [ $this, 'disable_function' ]);
+
+      // register route for cookie value retrieval
       add_action( 'rest_api_init', [ $this,  'register_routes' ] );
     }
   }
