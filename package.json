@@ -1,0 +1,31 @@
+{
+    "name": "colby-groups",
+    "version": "1.0.0",
+    "description": "Colby user group management plugin",
+    "author": "Brandon Waltz",
+    "license": "MIT",
+    "scripts": {
+        "start": "colby-wordpress-build --watch",
+        "build": "NODE_ENV=production colby-wordpress-build",
+        "lint": "colby-package-lint --withphp",
+        "testphp": "./vendor/bin/phpunit --bootstrap vendor/autoload.php tests/",
+        "testjs": "colby-package-test",
+        "test": "colby-package-test --withphp",
+        "format": "colby-package-format --withphp"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "colby-package-format --staged --withphp && colby-package-lint --staged --withphp && colby-package-test --staged --withphp"
+        }
+    },
+    "dependencies": {
+        "lodash": "^4.17.5",
+        "prop-types": "^15.5.10",
+        "react": "^16.0.0",
+        "colby-loader": "^1.0.0"
+    },
+    "devDependencies": {
+        "colby-package": "^2.1.9",
+        "colby-webpack": "^1.0.8"
+    }
+}

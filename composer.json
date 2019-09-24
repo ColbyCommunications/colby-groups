@@ -1,6 +1,6 @@
 {
     "name": "colbycollege/colby-groups",
-    "description": "Colby user group management plugin ",
+    "description": "Colby user group management plugin",
     "keywords": [
         "wordpress"
     ],
@@ -15,6 +15,15 @@
             "email": "brandon.waltz@colby.edu"
         }
     ],
+    "require": {
+        "php": ">=7.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.5",
+        "wp-coding-standards/wpcs": "^2.1",
+        "automattic/vipwpcs": "^2.0",
+        "dealerdirect/phpcodesniffer-composer-installer": "*"
+    },
     "autoload": {
         "psr-4": {
             "ColbyCollege\\Plugins\\ColbyGroups\\": "inc/classes"

@@ -22,7 +22,50 @@ class ColbyGroups {
 	public function __construct() {
         add_action( 'delete_blog', [ $this, 'delete_blog' ] );
         add_action( 'wpmu_new_blog', [ $this, 'activate' ] );
+        add_action('init', [ $this, 'sidebar_plugin_register' ] );
+        add_action( 'admin_enqueue_scripts', [ $this, 'sidebar_plugin_script_enqueue' ] );
+        add_action( 'wp_enqueue_scripts', [ $this, 'sidebar_plugin_script_enqueue' ]  );
+        add_action('enqueue_block_editor_assets', [ $this, 'sidebar_plugin_script_enqueue' ]);
     }
+
+    /** SIDEBAR */
+    public static function sidebar_plugin_register() {
+        register_meta( 'post', 'sidebar_plugin_meta_block_field', array(
+                'show_in_rest' => true,
+                'single' => true,
+                'type' => 'string',
+        ) );
+    }
+    
+    public static function sidebar_plugin_script_enqueue() {
+        global $post;
+        $plugin_js_path = plugin_dir_url(__DIR__) . '/dist/plugin.bundle.js';
+        // $plugin_css_path = "/js/plugin-sidebar.css";
+        
+        wp_enqueue_script( 
+            'colby-groups',
+            $plugin_js_path,
+            ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-plugins', 'wp-i18n', 'wp-components'],
+            filemtime($plugin_js_path),
+            true    
+        );
+            
+        // wp_enqueue_style(
+        //     'your-plugin-css',
+        //     _get_plugin_url() . $plugin_css_path,
+        //     [],
+        //     filemtime( _get_plugin_directory() . $plugin_css_path )
+        // );
+
+        
+        $colbyGroups = [
+            'blogId' => (int)get_current_blog_id(),
+            'postId' => (int)$post->ID,
+            'siteUrl' => get_site_url(),
+        ];
+        wp_localize_script( 'test', 'colbyGroups', $colbyGroups );
+    }
+
 
     public static function activate() {
 
