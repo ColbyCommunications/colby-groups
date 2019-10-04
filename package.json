@@ -22,10 +22,9 @@
         "lodash": "^4.17.5",
         "prop-types": "^15.5.10",
         "react": "^16.0.0",
-        "colby-loader": "^1.0.0"
+        "colby-loader": "^2.0.0"
     },
     "devDependencies": {
-        "colby-package": "^2.1.9",
-        "colby-webpack": "^1.0.8"
+        "colby-package": "^2.1.9"
     }
 }
