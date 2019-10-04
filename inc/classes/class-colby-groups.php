@@ -39,16 +39,16 @@ class ColbyGroups {
     
     public static function sidebar_plugin_script_enqueue() {
         global $post;
-        $plugin_js_path = plugin_dir_url(__DIR__) . '/dist/plugin.bundle.js';
+        // $plugin_js_path = plugin_dir_url(__DIR__) . '/dist/plugin.bundle.js';
         // $plugin_css_path = "/js/plugin-sidebar.css";
         
-        wp_enqueue_script( 
-            'colby-groups',
-            $plugin_js_path,
-            ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-plugins', 'wp-i18n', 'wp-components'],
-            filemtime($plugin_js_path),
-            true    
-        );
+        // wp_enqueue_script( 
+        //     'colby-groups',
+        //     $plugin_js_path,
+        //     ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-plugins', 'wp-i18n', 'wp-components'],
+        //     filemtime($plugin_js_path),
+        //     true    
+        // );
             
         // wp_enqueue_style(
         //     'your-plugin-css',
@@ -58,12 +58,12 @@ class ColbyGroups {
         // );
 
         
-        $colbyGroups = [
-            'blogId' => (int)get_current_blog_id(),
-            'postId' => (int)$post->ID,
-            'siteUrl' => get_site_url(),
-        ];
-        wp_localize_script( 'test', 'colbyGroups', $colbyGroups );
+        // $colbyGroups = [
+        //     'blogId' => (int)get_current_blog_id(),
+        //     'postId' => (int)$post->ID,
+        //     'siteUrl' => get_site_url(),
+        // ];
+        // wp_localize_script( 'test', 'colbyGroups', $colbyGroups );
     }
 
 

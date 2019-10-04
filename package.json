@@ -19,10 +19,11 @@
         }
     },
     "dependencies": {
+        "colby-loader": "^2.0.1",
         "lodash": "^4.17.5",
         "prop-types": "^15.5.10",
         "react": "^16.0.0",
-        "colby-loader": "^2.0.0"
+        "react-dom": "^16.10.2"
     },
     "devDependencies": {
         "colby-package": "^2.1.9"

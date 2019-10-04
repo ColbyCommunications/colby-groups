@@ -1,9 +1,19 @@
 import React, { Component } from 'react';
 import Loader from 'colby-loader';
+import ReactDOM from 'react-dom';
 import style from './style.scss';
 
-export default class ColbyGroupsConfigSidebar extends Component {
+const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Component {
     render() {
-        return <div>hello from javascript!!!</div>;
+        return (
+            <Loader>
+                <div className={style.foo}>hello from javascript!!!</div>
+            </Loader>
+        );
     }
-}
+};
+
+ReactDOM.render(
+    <ColbyGroupsConfigSidebar />,
+    document.querySelector('.colby-groups-sidebar-mount')
+);
