@@ -26,16 +26,31 @@ class ColbyTicket {
 	 *
 	 * @since 1.0.0
 	 */
-	public function __construct( ) {
-      add_action('set_current_user', array($this,'ticketCheck'));
-      add_action('wp_authenticate', array($this,'authenticate'));
-      add_action('wp_logout', array($this,'logout'));
-      add_action('login_form', array($this,'login_form'));
-  
-      add_action('lost_password', array($this,'disable_function'));
-      add_action('retrieve_password', array($this,'disable_function'));
-      add_action('password_reset', array($this,'disable_function'));
+	public function __construct() {
+
+    // if LANDO or PROD or Platform dev environment with prod environment
+    if ("ON" === getenv('LANDO') || "https://". $_SERVER['HTTP_HOST'] === "https://" . getenv('PRIMARY_DOMAIN') || (false !== getenv('PLATFORM_RELATIONSHIPS' && true === getenv('HAS_PROD')))) {
+      add_action('set_current_user', [ $this, 'ticketCheck' ]);
+      add_action('wp_authenticate', [ $this, 'authenticate' ]);
+      add_action('wp_logout', [ $this, 'logout' ]);
+      add_action('login_form', [ $this, 'login_form' ]);
+      add_action('lost_password', [ $this, 'disable_function' ]);
+      add_action('retrieve_password', [ $this, 'disable_function' ]);
+      add_action('password_reset', [ $this, 'disable_function' ]);
+
+      // register route for cookie value retrieval
+      add_action( 'rest_api_init', [ $this,  'register_routes' ] );
     }
+  }
+
+  function getCookieValues() {
+    if (array_key_exists('ColbyTicket', $_COOKIE)) {
+      return explode('&', $_COOKIE['ColbyTicket']);
+    }
+
+    return false;
+
+  }
 
     // if the user is not logged in but has a ColbyTicket cookie, log them in
     function ticketCheck() {
@@ -81,7 +96,7 @@ class ColbyTicket {
 
         $user_agent = $_SERVER['HTTP_USER_AGENT'];
         if ( $cookie['hash'] && $cookie['user'] && $cookie['time'] && $cookie['expires'] ) {
-            $hash_vals=array($this->secret, $cookie['ip'], $cookie['time'], $cookie['expires'], $cookie['user'], $cookie['profile'], $cookie['type'], $user_agent);
+            $hash_vals = array($this->secret, $cookie['ip'], $cookie['time'], $cookie['expires'], $cookie['user'], $cookie['profile'], $cookie['type'], $user_agent);
             $newhash = md5($colby_secret . md5(join(':',$hash_vals)));
 
             if ( $newhash == $cookie['hash'] && $cookie['type'] == 'Colby' ) {
@@ -229,11 +244,28 @@ class ColbyTicket {
       }
     }
 
-    // user doesn't have a ColbyTicket or the ticket is invalid
-    $redirect = $_SERVER['REQUEST_URI'];
+    // if !LANDO && !PROD && platform dev environment with prod
+    if ("ON" !== getenv('LANDO') && "https://". $_SERVER['HTTP_HOST'] !== "https://" . getenv('PRIMARY_DOMAIN')) {
+      // no cookie, need to get it from prod
+      $response = $this->colby_groups_request_cookie_values();
 
-    wp_redirect("https://www.colby.edu/ColbyMaster/login/?http://admissions.colby.edu".$redirect);
-    die();
+      if ($response) {
+        setcookie('ColbyTicket', $response);
+
+        // redirect back to where they were trying to go
+        wp_redirect("https://" . $_SERVER['HTTP_HOST'] . $redirect);
+        die();
+      } else {
+        // need to show prod login form here...or at least a message
+        die("Try logging in on production (https://{getenv('PRIMARY_DOMAIN'}) and trying the page your requested again again");
+      }
+    } else {
+      // user doesn't have a ColbyTicket or the ticket is invalid
+      $redirect = $_SERVER['REQUEST_URI'];
+
+      wp_redirect("https://www.colby.edu/ColbyMaster/login/?https://" . $_SERVER['HTTP_HOST'] . $redirect);
+      die();
+    }
   }
   
   function setGroups($account, $id) {
@@ -360,6 +392,31 @@ class ColbyTicket {
   function disable_function() {
     die( __( 'Sorry, this feature is disabled.', 'colbyTicket' ));
   }
+
+  public function colby_groups_request_cookie_values() {
+    $curl = curl_init();
+		curl_setopt_array($curl, [
+			CURLOPT_RETURNTRANSFER => 1,
+			CURLOPT_URL => sprintf('https://%s/wp-json/colby-groups/v1/get-cookie', getenv('PRIMARY_DOMAIN'))
+		]);
+		$result = curl_exec($curl);
+		curl_close($curl);
+		return json_decode($result, true);
+  }
+
+  public function colby_groups_get_cookie_route(WP_REST_Request $request) {
+    if ($cookie_values = $this->getCookieValues){
+      return json_decode($cookie_values, true);
+    } else {
+      return json_decode(['status' => false], true);
+    }
+	}
+
+  public function register_routes() {
+		register_rest_route('colby-groups/v1', '/get-cookie', array(
+				'methods'  => 'GET',
+				'callback' => [ $this, 'colby_groups_get_cookie_route' ],
+		));
+	}
 }
 
-?>
