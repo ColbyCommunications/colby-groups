@@ -23,9 +23,11 @@ class ColbyGroups {
         add_action( 'delete_blog', [ $this, 'delete_blog' ] );
         add_action( 'wpmu_new_blog', [ $this, 'activate' ] );
         add_action('init', [ $this, 'sidebar_plugin_register' ] );
-        add_action( 'admin_enqueue_scripts', [ $this, 'sidebar_plugin_script_enqueue' ] );
-        add_action( 'wp_enqueue_scripts', [ $this, 'sidebar_plugin_script_enqueue' ]  );
-        add_action('enqueue_block_editor_assets', [ $this, 'sidebar_plugin_script_enqueue' ]);
+        // add_action( 'admin_enqueue_scripts', [ $this, 'sidebar_plugin_script_enqueue' ] );
+        // add_action( 'wp_enqueue_scripts', [ $this, 'sidebar_plugin_script_enqueue' ]  );
+        // add_action('enqueue_block_editor_assets', [ $this, 'sidebar_plugin_script_enqueue' ]);
+
+        add_action( 'rest_api_init', [ $this,  'register_routes' ] );
     }
 
     /** SIDEBAR */
@@ -37,36 +39,6 @@ class ColbyGroups {
         ) );
     }
     
-    public static function sidebar_plugin_script_enqueue() {
-        global $post;
-        // $plugin_js_path = plugin_dir_url(__DIR__) . '/dist/plugin.bundle.js';
-        // $plugin_css_path = "/js/plugin-sidebar.css";
-        
-        // wp_enqueue_script( 
-        //     'colby-groups',
-        //     $plugin_js_path,
-        //     ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-plugins', 'wp-i18n', 'wp-components'],
-        //     filemtime($plugin_js_path),
-        //     true    
-        // );
-            
-        // wp_enqueue_style(
-        //     'your-plugin-css',
-        //     _get_plugin_url() . $plugin_css_path,
-        //     [],
-        //     filemtime( _get_plugin_directory() . $plugin_css_path )
-        // );
-
-        
-        // $colbyGroups = [
-        //     'blogId' => (int)get_current_blog_id(),
-        //     'postId' => (int)$post->ID,
-        //     'siteUrl' => get_site_url(),
-        // ];
-        // wp_localize_script( 'test', 'colbyGroups', $colbyGroups );
-    }
-
-
     public static function activate() {
 
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
@@ -165,5 +137,49 @@ class ColbyGroups {
     
         $stmt = 'DROP TABLE ' . $dbprefix . 'cc_group_roles';
         $wpdb->query( $stmt );
+    }
+
+
+    public function colby_groups_get_groups_for_post_endpoint($request) {
+        global $wpdb;
+        $user = wp_get_current_user();
+        if (!in_array( 'subscriber', $user->roles)) {
+            $dbprefix = $wpdb->base_prefix;
+            if ($request['blog_id'] != 1) { 
+                $dbprefix .= $request['blog_id'] . '_'; 
+            }
+            if (isset($request['id'])) {
+                $s_groups = $wpdb->get_results($wpdb->prepare( "SELECT " . $dbprefix . "cc_group_roles.roles, " . $dbprefix . "cc_group_roles.ID, ".$wpdb->base_prefix."ccg_groups.group_name FROM ".$wpdb->base_prefix."ccg_groups JOIN " . $dbprefix . "cc_group_roles ON ".$wpdb->base_prefix."ccg_groups.ID=" . $dbprefix . 'cc_group_roles.group_id WHERE ' . $dbprefix . 'cc_group_roles.post_id=' . $request['id'] . ' ORDER BY '.$wpdb->base_prefix."ccg_groups.group_name", ARRAY_N ), ARRAY_A);
+                return $s_groups;
+            } else {
+                return rest_ensure_response( 'Err: Invalid Post Id.' );
+            }
+        } else {
+            return rest_ensure_response( 'Err: Forbidden.' );
+        }
+    }
+    
+    public function colby_groups_index($request) {
+        global $wpdb;
+        $user = wp_get_current_user();
+        if ( !in_array( 'subscriber', $user->roles ) ) {
+            $a_stmt = "SELECT ".$wpdb->base_prefix."ccg_groups.group_name, " . $wpdb->base_prefix."ccg_groups.ID, " . $wpdb->base_prefix."ccg_groups.group_description, " . $wpdb->base_prefix."ccg_groups.group_type FROM ".$wpdb->base_prefix."ccg_groups ORDER BY ".$wpdb->base_prefix."ccg_groups.group_name";
+            $a_groups = $wpdb->get_results( $wpdb->prepare( $a_stmt, ARRAY_N ), ARRAY_A );
+            
+            return $a_groups;
+        } else {
+            return rest_ensure_response( 'Forbidden.' );
+        }
+    }
+    
+      public function register_routes() {
+        register_rest_route('colby-groups/v1', '/groups', array(
+                'methods'  => 'GET',
+                'callback' => [ $this, 'colby_groups_index' ],
+        ));
+        register_rest_route('colby-groups/v1', '/groupsForPost/(?P<blog_id>[\d]+)/(?P<id>[\d]+)', array(
+            'methods'  => 'GET',
+            'callback' => 'colby_groups_get_groups_for_post_endpoint',
+        ));
     }
 }

@@ -6,6 +6,7 @@
  */
 
 namespace ColbyCollege\Plugins\ColbyGroups;
+define( 'CCG_BLOG_PUBLIC_COLBY_ONLY', -1 );
 
 /**
  * Dashboard class.
@@ -21,8 +22,8 @@ class Dashboard {
 	public function __construct() { 
         add_action( 'admin_menu', [ $this, 'menus' ] );
         add_action( 'blog_privacy_selector', [ $this, 'add_privacy_options' ] );
-        add_action( 'add_meta_boxes', [ $this, 'colbygroups_add_meta_box' ] );
-        add_action( 'save_post', [ $this, 'colbygroups_save_meta_box_data' ] );
+        // add_action( 'add_meta_boxes', [ $this, 'colbygroups_add_meta_box' ] );
+        // add_action( 'save_post', [ $this, 'colbygroups_save_meta_box_data' ] );
         add_action( 'post_submitbox_misc_actions', [ $this, 'colbygroups_publish_metabox' ] );
         add_action( 'admin_bar_menu', [ $this, 'colbygroups_toolbar_mods' ], 50 );
         add_filter( 'get_blogs_of_user', [ $this, 'colbygroups_add_group_blogs' ] );
@@ -178,47 +179,47 @@ EOT;
             <label for=\"ccg_publicly_viewable\">Make this post publicly viewable?</label>";
     }
 
-    public static function colbygroups_add_meta_box() {
-            $screens = array( 'post', 'page', 'catalog-entry' );
-            foreach ( $screens as $screen ) {
-                    add_meta_box(
-                            'colbygroups_perms_id',
-                            'Colby Groups',
-                            [ $this, 'colbygroups_perms_callback' ],
-                            $screen
-                    );
-            }
-    }
+    // public static function colbygroups_add_meta_box() {
+    //         $screens = array( 'post', 'page', 'catalog-entry' );
+    //         foreach ( $screens as $screen ) {
+    //                 add_meta_box(
+    //                         'colbygroups_perms_id',
+    //                         'Colby Groups',
+    //                         [ $this, 'colbygroups_perms_callback' ],
+    //                         $screen
+    //                 );
+    //         }
+    // }
     
-    public static function colbygroups_publish_metabox() {
-        global $post;
+    // public static function colbygroups_publish_metabox() {
+    //     global $post;
         
-        $type = get_post_type( $post );
-        if ( 'page' != $type && 'post' != $type && 'catalog-entry' != $type ) return;
+    //     $type = get_post_type( $post );
+    //     if ( 'page' != $type && 'post' != $type && 'catalog-entry' != $type ) return;
         
-        list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
+    //     list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
         
-        $checked = ( get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true ) ) ? 'checked="yes"' : '';
+    //     $checked = ( get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true ) ) ? 'checked="yes"' : '';
         
-        echo '<div id="ccg_limit_groups_div" class="misc-pub-section">';
-        echo '<input name="ccg_limit_groups" id="ccg_limit_groups" type="checkbox" '.$checked.' value="1"> <label for="ccg_limit_groups">Restrict to Colby Groups</label>';
-        echo '</div>';
+    //     echo '<div id="ccg_limit_groups_div" class="misc-pub-section">';
+    //     echo '<input name="ccg_limit_groups" id="ccg_limit_groups" type="checkbox" '.$checked.' value="1"> <label for="ccg_limit_groups">Restrict to Colby Groups</label>';
+    //     echo '</div>';
         
-        if ( true == $parent_limit && CCG_BLOG_PUBLIC_COLBY_ONLY != get_option( 'blog_public' ) ) {
-            $show_public = 'none';
-            if ( '' == $checked && true == $parent_limit ) {
-                $show_public = 'block';
-            }
+    //     if ( true == $parent_limit && CCG_BLOG_PUBLIC_COLBY_ONLY != get_option( 'blog_public' ) ) {
+    //         $show_public = 'none';
+    //         if ( '' == $checked && true == $parent_limit ) {
+    //             $show_public = 'block';
+    //         }
         
-            $limited = get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true );
-            if ( '0' == $limited ) { $public_checked = 'checked="yes"'; }
-                else { $public_checked = ''; }
+    //         $limited = get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true );
+    //         if ( '0' == $limited ) { $public_checked = 'checked="yes"'; }
+    //             else { $public_checked = ''; }
         
-            echo '<div id="ccg_public_div" class="misc-pub-section" style="display: ' . $show_public . '">';
-            echo '<input name="ccg_public" id="ccg_public" type="checkbox" ' . $public_checked . ' value="1"> <label for="ccg_public">Visible to the Public</label>';
-            echo '</div>';
-        }
-    }
+    //         echo '<div id="ccg_public_div" class="misc-pub-section" style="display: ' . $show_public . '">';
+    //         echo '<input name="ccg_public" id="ccg_public" type="checkbox" ' . $public_checked . ' value="1"> <label for="ccg_public">Visible to the Public</label>';
+    //         echo '</div>';
+    //     }
+    // }
 
         public static function colbygroups_dropdown_users( $query_args, $r ) {
                     global $wpdb;

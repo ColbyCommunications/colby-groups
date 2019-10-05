@@ -4,8 +4,8 @@
  *
  * @since 1.0.0
  */
-
 namespace ColbyCollege\Plugins\ColbyGroups;
+define( 'CCG_RESTRICT_EDITORS', 1);
 
 /**
  * Capabilities class.
@@ -23,7 +23,7 @@ class Capabilities {
         add_filter( 'user_has_cap', [ $this, 'ccg_filter' ], 100, 3 );
         add_action( 'template_redirect', [ $this, 'ccg_access_check' ] );
         add_action( 'admin_head', [ $this, 'prevent_editor_frontpage' ] );
-        add_filter( '404_template', [ $this, 'ccg_404_template' ], 2000, 1 );
+        // add_filter( '404_template', [ $this, 'ccg_404_template' ], 2000, 1 );
         add_action( 'switch_to_user', [ $this, 'ccg_switch_to_user' ] );
     }
     
@@ -145,9 +145,9 @@ class Capabilities {
                     /* if no read post capability for all groups/roles then redirect to the 403 page */
                     if ( 0 == $read_ok ) {
                         /* error_log( "CCG: this user should be redirected to the 403 page" ); */
-                        header( 'HTTP/1.1 403 Unauthorized' );
-                        header( 'Content-Type: text/html' );
-                        readfile( LOCATION_403 );
+                        // header( 'HTTP/1.1 403 Unauthorized' );
+                        // header( 'Content-Type: text/html' );
+                        // readfile( LOCATION_403 );
                         exit();
                     }
                 
@@ -172,9 +172,9 @@ class Capabilities {
                             exit();
                         } else {
                             /* error_log( "CCG: this user should be redirected to the 403 page" ); */
-                            header( 'HTTP/1.1 403 Unauthorized' );
-                            header( 'Content-Type: text/html' );
-                            readfile( LOCATION_403 );
+                            // header( 'HTTP/1.1 403 Unauthorized' );
+                            // header( 'Content-Type: text/html' );
+                            // readfile( LOCATION_403 );
                             exit();
                         }
                     }
@@ -293,49 +293,48 @@ class Capabilities {
         return $read_ok;
     } /* ccg_user_can_read */
     
-    public static function ccg_404_template( $template ) {
-        global $wpdb;
+    // public static function ccg_404_template( $template ) {
+    //     global $wpdb;
         
-        $parts=explode('/',$_SERVER['REQUEST_URI']);
-        $blogs = $wpdb->get_results( "SELECT blog_id FROM $wpdb->blogs WHERE path='/".$parts[1]."/'", OBJECT_K );
+    //     $parts=explode('/',$_SERVER['REQUEST_URI']);
+    //     $blogs = $wpdb->get_results( "SELECT blog_id FROM $wpdb->blogs WHERE path='/".$parts[1]."/'", OBJECT_K );
         
-        /* get the current user's ID */
-        $user_ID = get_current_user_id();
+    //     /* get the current user's ID */
+    //     $user_ID = get_current_user_id();
         
         
-        if ( $blogs ) {
-            foreach ( $blogs as $blog ) {
-                $which = count( $parts ) - 2;
-                switch_to_blog( $blog->blog_id );
+    //     if ( $blogs ) {
+    //         foreach ( $blogs as $blog ) {
+    //             $which = count( $parts ) - 2;
+    //             switch_to_blog( $blog->blog_id );
                 
-                /* $post = get_page_by_path( $parts[ count( $parts ) - 2 ] ); */
-                if ( preg_match( '/[a-zA-Z0-9]$/', $_SERVER['REQUEST_URI'] ) ) {
+    //             /* $post = get_page_by_path( $parts[ count( $parts ) - 2 ] ); */
+    //             if ( preg_match( '/[a-zA-Z0-9]$/', $_SERVER['REQUEST_URI'] ) ) {
+    //                 $post = get_page_by_path( $parts[ count( $parts ) - 1 ] );
+    //             } else {
+    //                 $post = get_page_by_path( $parts[ count( $parts ) - 2 ] );
+    //             }
 
-                                            $post = get_page_by_path( $parts[ count( $parts ) - 1 ] );
-                                    } else {
-                                            $post = get_page_by_path( $parts[ count( $parts ) - 2 ] );
-                                    }
+    //             if ( $post ) {
+    //                 if ( $user_ID ) {
+    //                     /* user already logged in, just do a 403 */
+    //                     return LOCATION_403;
+    //                 } else {
+    //                     /* user not logged in, redirect to the authentication page (401/412) */
+    //                     return LOCATION_401;
+    //                 }
+    //             } else {
+    //                 /* no post/page for this post, just do the theme's 404 */
+    //                 return LOCATION_404;
+    //             }
+    //         }
+    //     } else {
+    //         /* no site for this URL, just do the theme's 404 */
+    //         return LOCATION_404;
+    //     }
 
-                if ( $post ) {
-                    if ( $user_ID ) {
-                        /* user already logged in, just do a 403 */
-                        return LOCATION_403;
-                    } else {
-                        /* user not logged in, redirect to the authentication page (401/412) */
-                        return LOCATION_401;
-                    }
-                } else {
-                    /* no post/page for this post, just do the theme's 404 */
-                    return LOCATION_404;
-                }
-            }
-        } else {
-            /* no site for this URL, just do the theme's 404 */
-            return LOCATION_404;
-        }
-
-        return $template;
-    } /* ccg_404_template */
+    //     return $template;
+    // } /* ccg_404_template */
 
     public static function prevent_editor_frontpage() {
         global $post;
