@@ -23,19 +23,24 @@ class ColbyGroups {
         add_action( 'delete_blog', [ $this, 'delete_blog' ] );
         add_action( 'wpmu_new_blog', [ $this, 'activate' ] );
         add_action('init', [ $this, 'sidebar_plugin_register' ] );
-        // add_action( 'admin_enqueue_scripts', [ $this, 'sidebar_plugin_script_enqueue' ] );
-        // add_action( 'wp_enqueue_scripts', [ $this, 'sidebar_plugin_script_enqueue' ]  );
-        // add_action('enqueue_block_editor_assets', [ $this, 'sidebar_plugin_script_enqueue' ]);
-
         add_action( 'rest_api_init', [ $this,  'register_routes' ] );
+
+        // don't need to enqueue any gutenberg sidebars scripts because we handle that with
+        // webpack globally from the app
     }
 
     /** SIDEBAR */
     public static function sidebar_plugin_register() {
-        register_meta( 'post', 'sidebar_plugin_meta_block_field', array(
+        register_meta( 'post', 'colby_groups_meta_restrcit_to_groups', array(
                 'show_in_rest' => true,
                 'single' => true,
-                'type' => 'string',
+                'type' => 'boolean',
+        ) );
+
+        register_meta( 'post', 'colby_groups_meta_selected_groups', array(
+            'type'		=> 'string',
+            'single'	=> true,
+            'show_in_rest'	=> true,
         ) );
     }
     
@@ -114,8 +119,6 @@ class ColbyGroups {
     
             dbDelta( $sql );
         }
-        
-        add_option( "ccg_db_version", "1.0" );
     }
 
     public static function unload() {

@@ -22,9 +22,6 @@ class Dashboard {
 	public function __construct() { 
         add_action( 'admin_menu', [ $this, 'menus' ] );
         add_action( 'blog_privacy_selector', [ $this, 'add_privacy_options' ] );
-        // add_action( 'add_meta_boxes', [ $this, 'colbygroups_add_meta_box' ] );
-        // add_action( 'save_post', [ $this, 'colbygroups_save_meta_box_data' ] );
-        add_action( 'post_submitbox_misc_actions', [ $this, 'colbygroups_publish_metabox' ] );
         add_action( 'admin_bar_menu', [ $this, 'colbygroups_toolbar_mods' ], 50 );
         add_filter( 'get_blogs_of_user', [ $this, 'colbygroups_add_group_blogs' ] );
         add_filter( 'wp_dropdown_users_args', [ $this, 'colbygroups_dropdown_users' ], 10, 2 );
@@ -38,188 +35,149 @@ class Dashboard {
     }
 
     public static function menu_processing( $post_id = 0 ) {
-        global $wpdb;
+//         global $wpdb;
 
-        if ( $post_id == '' ) { $post_id=0; }
+//         if ( $post_id == '' ) { $post_id=0; }
         
-        $dbprefix = $wpdb->base_prefix;
-        if ( get_current_blog_id() != 1 ) { $dbprefix .= get_current_blog_id() . '_'; }
+//         $dbprefix = $wpdb->base_prefix;
+//         if ( get_current_blog_id() != 1 ) { $dbprefix .= get_current_blog_id() . '_'; }
 
-        /* handle deleting groups from the current blog */
-        if ( isset( $_POST['del_group'] ) ) {
-            foreach ( $_POST['del_group'] as $delgroup ) {
-                $wpdb->delete( $dbprefix . "cc_group_roles", array( 'ID' => $delgroup ) );
-            }
-        }
+//         /* handle deleting groups from the current blog */
+//         if ( isset( $_POST['del_group'] ) ) {
+//             foreach ( $_POST['del_group'] as $delgroup ) {
+//                 $wpdb->delete( $dbprefix . "cc_group_roles", array( 'ID' => $delgroup ) );
+//             }
+//         }
 
-        /* handle adding a group to the current blog */
-        if ( isset( $_POST['group'] ) ) {
-            foreach ( $_POST['group'] as $newgroup ) {
-                $new_role=serialize(array($_POST['role']));
-                $data=array( 'group_id' => $newgroup,
-                                'roles' => $new_role,
-                                'post_id' => 0 );
-                $wpdb->insert( $dbprefix . "cc_group_roles", $data, array( '%d', '%s' ) );
-            }
-        }
+//         /* handle adding a group to the current blog */
+//         if ( isset( $_POST['group'] ) ) {
+//             foreach ( $_POST['group'] as $newgroup ) {
+//                 $new_role=serialize(array($_POST['role']));
+//                 $data=array( 'group_id' => $newgroup,
+//                                 'roles' => $new_role,
+//                                 'post_id' => 0 );
+//                 $wpdb->insert( $dbprefix . "cc_group_roles", $data, array( '%d', '%s' ) );
+//             }
+//         }
 
-        $s_groups = $wpdb->get_results(
-            $wpdb->prepare( "SELECT " . $dbprefix . "cc_group_roles.roles, " . $dbprefix . "cc_group_roles.ID, ".$wpdb->base_prefix."ccg_groups.group_name FROM ".$wpdb->base_prefix."ccg_groups JOIN " . $dbprefix . "cc_group_roles ON ".$wpdb->base_prefix."ccg_groups.ID=" . $dbprefix . 'cc_group_roles.group_id WHERE ' . $dbprefix . 'cc_group_roles.post_id=' . $post_id . ' ORDER BY '.$wpdb->base_prefix."ccg_groups.group_name", ARRAY_N )
-        );
+//         $s_groups = $wpdb->get_results(
+//             $wpdb->prepare( "SELECT " . $dbprefix . "cc_group_roles.roles, " . $dbprefix . "cc_group_roles.ID, ".$wpdb->base_prefix."ccg_groups.group_name FROM ".$wpdb->base_prefix."ccg_groups JOIN " . $dbprefix . "cc_group_roles ON ".$wpdb->base_prefix."ccg_groups.ID=" . $dbprefix . 'cc_group_roles.group_id WHERE ' . $dbprefix . 'cc_group_roles.post_id=' . $post_id . ' ORDER BY '.$wpdb->base_prefix."ccg_groups.group_name", ARRAY_N )
+//         );
 
-        print <<<EOT
-<style>
-table.groups tbody tr:nth-child(odd) { background-color:#f0f0f0; }
-table.groups tbody tr:nth-child(even){ background-color:#fff; }
-div.groups:nth-child(odd) { background-color:#f0f0f0; }
-div.groups:nth-child(even){ background-color:#fff; }
-.groups-odd { background-color:#f0f0f0; }
-.groups-even { background-color:#fff; }
-</style>
-EOT;
+//         print <<<EOT
+// <style>
+// table.groups tbody tr:nth-child(odd) { background-color:#f0f0f0; }
+// table.groups tbody tr:nth-child(even){ background-color:#fff; }
+// div.groups:nth-child(odd) { background-color:#f0f0f0; }
+// div.groups:nth-child(even){ background-color:#fff; }
+// .groups-odd { background-color:#f0f0f0; }
+// .groups-even { background-color:#fff; }
+// </style>
+// EOT;
 
-        echo "<div class='wrap'>";
+//         echo "<div class='wrap'>";
 
-        if ( $post_id == 0 ) {
-            echo "<h2>Colby Groups Administration</h2>";
-            echo "<p>The active directory groups below have the listed roles for this site. Adding users to a group or creating new groups must be done in the CX database.</p>";
-            echo "<form method='post'>";
-            echo '<div class="alignleft actions bulkactions"><select name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="submit" name="" id="doaction" class="button action" value="Apply" /></div><br/>';
-        } else {
-            echo "<p>The active directory groups below have the listed roles for this post (if no groups are selected the Colby Group settings for the site are used). Adding users to a group or creating new groups must be done in the CX database.</p>";
-            echo '<div class="alignleft actions bulkactions"><select id="action1" name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="button" name="" id="doaction" class="button action" value="Apply" onclick="deleteGroups(\'1\')" /></div><br/>';
-        }
+//         if ( $post_id == 0 ) {
+//             echo "<h2>Colby Groups Administration</h2>";
+//             echo "<p>The active directory groups below have the listed roles for this site. Adding users to a group or creating new groups must be done in the CX database.</p>";
+//             echo "<form method='post'>";
+//             echo '<div class="alignleft actions bulkactions"><select name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="submit" name="" id="doaction" class="button action" value="Apply" /></div><br/>';
+//         } else {
+//             echo "<p>The active directory groups below have the listed roles for this post (if no groups are selected the Colby Group settings for the site are used). Adding users to a group or creating new groups must be done in the CX database.</p>";
+//             echo '<div class="alignleft actions bulkactions"><select id="action1" name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="button" name="" id="doaction" class="button action" value="Apply" onclick="deleteGroups(\'1\')" /></div><br/>';
+//         }
 
-        echo '<table class="wp-list-table widefat fixed groups" cellspacing="0">';
-        echo '<thead><tr><th scope="col" id="cb" class="manage-column column-cb check-column"  style=""><label class="screen-reader-text" for="cb-select-all-1">Select All</label><input id="cb-select-all-1" type="checkbox" /></th><th>Group</th><th>Role</th></tr></thead>';
-        echo '<tbody id="the-group-list">';
+//         echo '<table class="wp-list-table widefat fixed groups" cellspacing="0">';
+//         echo '<thead><tr><th scope="col" id="cb" class="manage-column column-cb check-column"  style=""><label class="screen-reader-text" for="cb-select-all-1">Select All</label><input id="cb-select-all-1" type="checkbox" /></th><th>Group</th><th>Role</th></tr></thead>';
+//         echo '<tbody id="the-group-list">';
 
-        $my_groups=array();
-        $my_group_names=array();
-        if ( $s_groups ) {
-            foreach ( $s_groups as $group ) {
-                array_push($my_groups,array( 'group' => "'".$group->group_name."'", 'roles' => $group->roles ) );
-                array_push($my_group_names, "'".$group->group_name."'" );
-                $grouproles = unserialize( $group->roles );
-                echo "<tr id='tr-".$group->group_name."'><td><input type='checkbox' id='del_group".$group->group_name."' name='del_group[]' class='deletecheckbox' value='".$group->ID."' />".'<td onclick="jQuery(\'#del_group'.$group->group_name.'\').prop(\'checked\',!jQuery(\'#del_group'.$group->group_name.'\').prop(\'checked\'));">'.$group->group_name."</td><td>";
-                foreach ( $grouproles as $grouprole ) {
-                    echo $grouprole.'&nbsp;&nbsp;';
-                }
-                echo "</td></tr>";
-            }
-        }
+//         $my_groups=array();
+//         $my_group_names=array();
+//         if ( $s_groups ) {
+//             foreach ( $s_groups as $group ) {
+//                 array_push($my_groups,array( 'group' => "'".$group->group_name."'", 'roles' => $group->roles ) );
+//                 array_push($my_group_names, "'".$group->group_name."'" );
+//                 $grouproles = unserialize( $group->roles );
+//                 echo "<tr id='tr-".$group->group_name."'><td><input type='checkbox' id='del_group".$group->group_name."' name='del_group[]' class='deletecheckbox' value='".$group->ID."' />".'<td onclick="jQuery(\'#del_group'.$group->group_name.'\').prop(\'checked\',!jQuery(\'#del_group'.$group->group_name.'\').prop(\'checked\'));">'.$group->group_name."</td><td>";
+//                 foreach ( $grouproles as $grouprole ) {
+//                     echo $grouprole.'&nbsp;&nbsp;';
+//                 }
+//                 echo "</td></tr>";
+//             }
+//         }
 
-        echo '</tbody>';
-        echo '<tfoot><tr><th scope="col" id="cb" class="manage-column column-cb check-column"  style=""><label class="screen-reader-text" for="cb-select-all-1">Select All</label><input id="cb-select-all-1" type="checkbox" /></th><th>Group</th><th>Role</th></tr></tfoot>';
-        echo '</table>';
+//         echo '</tbody>';
+//         echo '<tfoot><tr><th scope="col" id="cb" class="manage-column column-cb check-column"  style=""><label class="screen-reader-text" for="cb-select-all-1">Select All</label><input id="cb-select-all-1" type="checkbox" /></th><th>Group</th><th>Role</th></tr></tfoot>';
+//         echo '</table>';
 
-        if ( $post_id == 0 ) {
-            echo '<div class="alignleft actions bulkactions"><select name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="submit" name="" id="doaction" class="button action" value="Apply" /></div><br/><br/>';
-            echo '</form>';
-        } else {
-            echo '<div class="alignleft actions bulkactions"><select id="action2" name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="button" name="" id="doaction" class="button action" value="Apply" onclick="deleteGroups(\'2\')" /></div><br/><br/>';
-        }
+//         if ( $post_id == 0 ) {
+//             echo '<div class="alignleft actions bulkactions"><select name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="submit" name="" id="doaction" class="button action" value="Apply" /></div><br/><br/>';
+//             echo '</form>';
+//         } else {
+//             echo '<div class="alignleft actions bulkactions"><select id="action2" name="action_ccg"><option value="-1" selected="selected">Bulk Actions</option><option value="delete-selected">Delete</option></select> <input type="button" name="" id="doaction" class="button action" value="Apply" onclick="deleteGroups(\'2\')" /></div><br/><br/>';
+//         }
         
-        $a_stmt = "SELECT ".$wpdb->base_prefix."ccg_groups.group_name, " . $wpdb->base_prefix."ccg_groups.ID, " . $wpdb->base_prefix."ccg_groups.group_description, " . $wpdb->base_prefix."ccg_groups.group_type  FROM ".$wpdb->base_prefix."ccg_groups WHERE ".$wpdb->base_prefix."ccg_groups.group_name like 'WP%' OR ".$wpdb->base_prefix."ccg_groups.group_type = 'CC' " ;
+//         $a_stmt = "SELECT ".$wpdb->base_prefix."ccg_groups.group_name, " . $wpdb->base_prefix."ccg_groups.ID, " . $wpdb->base_prefix."ccg_groups.group_description, " . $wpdb->base_prefix."ccg_groups.group_type  FROM ".$wpdb->base_prefix."ccg_groups WHERE ".$wpdb->base_prefix."ccg_groups.group_name like 'WP%' OR ".$wpdb->base_prefix."ccg_groups.group_type = 'CC' " ;
 
-        /* add a WHERE clause to get groups not already selected (posts need all groups) */
-        if ( count( $my_group_names ) && ( $post_id == 0 ) ) { $a_stmt .= "AND group_name NOT IN (".implode(',',$my_group_names).") "; }
-        $a_stmt .= "ORDER BY ".$wpdb->base_prefix."ccg_groups.group_name";
+//         /* add a WHERE clause to get groups not already selected (posts need all groups) */
+//         if ( count( $my_group_names ) && ( $post_id == 0 ) ) { $a_stmt .= "AND group_name NOT IN (".implode(',',$my_group_names).") "; }
+//         $a_stmt .= "ORDER BY ".$wpdb->base_prefix."ccg_groups.group_name";
 
-        $a_groups = $wpdb->get_results( $wpdb->prepare( $a_stmt, ARRAY_N ) );
+//         $a_groups = $wpdb->get_results( $wpdb->prepare( $a_stmt, ARRAY_N ) );
 
-        echo '<h3>Available Colby Groups</h3>';
+//         echo '<h3>Available Colby Groups</h3>';
 
-        if ( $post_id == 0 ) {
-            echo "<p>Select groups to assign to this site and the role for those groups then click the 'Assign this Role to the selected Group(s)' button.</p>";
-            echo '<form method="post">';
-        } else {
-            echo "<p>Select groups to assign to this post and the role for those groups then click the 'Assign this Role to the selected Group(s)' button.</p>";
-        }
+//         if ( $post_id == 0 ) {
+//             echo "<p>Select groups to assign to this site and the role for those groups then click the 'Assign this Role to the selected Group(s)' button.</p>";
+//             echo '<form method="post">';
+//         } else {
+//             echo "<p>Select groups to assign to this post and the role for those groups then click the 'Assign this Role to the selected Group(s)' button.</p>";
+//         }
 
-        echo '<div id="available-groups" style="width: 400px; height: 300px; overflow-x: auto; overflow-y: none; border: 1px solid #333;">';
-        if ( $a_groups ) {
-            foreach ( $a_groups as $group ) {
-                $value = $group->ID;
-                $display = 'block';
-                $checked = '';
-                foreach ( $my_groups as $mgroup ) {
-                    if ( "'".$group->group_name."'" == $mgroup['group'] ) {
-                        $userRoles = '';
-                        foreach ( unserialize( $mgroup['roles'] ) as $userRole ) { $userRoles = $userRoles ? $userRoles+','+$userRole : $userRole; } 
-                        $value .= ':' . $userRoles;
-                        $display = 'none';
-                        $checked = 'checked="yes"';
-                    }
-                }
+//         echo '<div id="available-groups" style="width: 400px; height: 300px; overflow-x: auto; overflow-y: none; border: 1px solid #333;">';
+//         if ( $a_groups ) {
+//             foreach ( $a_groups as $group ) {
+//                 $value = $group->ID;
+//                 $display = 'block';
+//                 $checked = '';
+//                 foreach ( $my_groups as $mgroup ) {
+//                     if ( "'".$group->group_name."'" == $mgroup['group'] ) {
+//                         $userRoles = '';
+//                         foreach ( unserialize( $mgroup['roles'] ) as $userRole ) { $userRoles = $userRoles ? $userRoles+','+$userRole : $userRole; } 
+//                         $value .= ':' . $userRoles;
+//                         $display = 'none';
+//                         $checked = 'checked="yes"';
+//                     }
+//                 }
 
-                echo '<div id="group' . $group->group_name . 'div" class="groups" style="padding: 3px; display: '.$display.'"><input type="checkbox" id="group'.$group->group_name.'" class="groupcheckbox" name="group[]" value="' . $value . '" '.$checked.' /> <span onclick="jQuery(\'#group'.$group->group_name.'\').prop(\'checked\',!jQuery(\'#group'.$group->group_name.'\').prop(\'checked\'));"> '.$group->group_name;
-                if ( $group->group_type == 'CC' ) { echo ' - ' . $group->group_description; }
-                echo '</span></div>';
-            }
-        }
-        echo '</div>';
-        echo '<div>Role for selected groups: <select id="grouprole" name="role">';
+//                 echo '<div id="group' . $group->group_name . 'div" class="groups" style="padding: 3px; display: '.$display.'"><input type="checkbox" id="group'.$group->group_name.'" class="groupcheckbox" name="group[]" value="' . $value . '" '.$checked.' /> <span onclick="jQuery(\'#group'.$group->group_name.'\').prop(\'checked\',!jQuery(\'#group'.$group->group_name.'\').prop(\'checked\'));"> '.$group->group_name;
+//                 if ( $group->group_type == 'CC' ) { echo ' - ' . $group->group_description; }
+//                 echo '</span></div>';
+//             }
+//         }
+//         echo '</div>';
+//         echo '<div>Role for selected groups: <select id="grouprole" name="role">';
         
-        foreach (get_editable_roles() as $role_name => $role_info) {
-            echo '<option value="'.$role_name.'">'.$role_info['name'].'</option>';
-        }
+//         foreach (get_editable_roles() as $role_name => $role_info) {
+//             echo '<option value="'.$role_name.'">'.$role_info['name'].'</option>';
+//         }
         
-        echo '</select></div>';
+//         echo '</select></div>';
 
-        if ( $post_id == 0 ) {
-            echo '<input class="button action" type="submit" value="Assign this Role to the selected Group(s)" />';
-            echo '</form>';
-        } else {
-            echo '<input class="button action" type="button" value="Assign this Role to the selected Group(s)" onclick="addGroups()" />';
-        }
-        echo '</div><p>&nbsp;</p>';
-        $checked = get_post_meta( $post_id, 'ccg_publicly_viewable', true ) ? ' checked' : '';
-        echo "<input type=\"checkbox\" id=\"ccg_publicly_viewable\" name=\"ccg_publicly_viewable\"$checked />
-            <label for=\"ccg_publicly_viewable\">Make this post publicly viewable?</label>";
+//         if ( $post_id == 0 ) {
+//             echo '<input class="button action" type="submit" value="Assign this Role to the selected Group(s)" />';
+//             echo '</form>';
+//         } else {
+//             echo '<input class="button action" type="button" value="Assign this Role to the selected Group(s)" onclick="addGroups()" />';
+//         }
+//         echo '</div><p>&nbsp;</p>';
+//         $checked = get_post_meta( $post_id, 'ccg_publicly_viewable', true ) ? ' checked' : '';
+//         echo "<input type=\"checkbox\" id=\"ccg_publicly_viewable\" name=\"ccg_publicly_viewable\"$checked />
+//             <label for=\"ccg_publicly_viewable\">Make this post publicly viewable?</label>";
+
+        echo '<div id="colby-groups-admin-page"></div>';
     }
 
-    // public static function colbygroups_add_meta_box() {
-    //         $screens = array( 'post', 'page', 'catalog-entry' );
-    //         foreach ( $screens as $screen ) {
-    //                 add_meta_box(
-    //                         'colbygroups_perms_id',
-    //                         'Colby Groups',
-    //                         [ $this, 'colbygroups_perms_callback' ],
-    //                         $screen
-    //                 );
-    //         }
-    // }
-    
-    // public static function colbygroups_publish_metabox() {
-    //     global $post;
-        
-    //     $type = get_post_type( $post );
-    //     if ( 'page' != $type && 'post' != $type && 'catalog-entry' != $type ) return;
-        
-    //     list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
-        
-    //     $checked = ( get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true ) ) ? 'checked="yes"' : '';
-        
-    //     echo '<div id="ccg_limit_groups_div" class="misc-pub-section">';
-    //     echo '<input name="ccg_limit_groups" id="ccg_limit_groups" type="checkbox" '.$checked.' value="1"> <label for="ccg_limit_groups">Restrict to Colby Groups</label>';
-    //     echo '</div>';
-        
-    //     if ( true == $parent_limit && CCG_BLOG_PUBLIC_COLBY_ONLY != get_option( 'blog_public' ) ) {
-    //         $show_public = 'none';
-    //         if ( '' == $checked && true == $parent_limit ) {
-    //             $show_public = 'block';
-    //         }
-        
-    //         $limited = get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true );
-    //         if ( '0' == $limited ) { $public_checked = 'checked="yes"'; }
-    //             else { $public_checked = ''; }
-        
-    //         echo '<div id="ccg_public_div" class="misc-pub-section" style="display: ' . $show_public . '">';
-    //         echo '<input name="ccg_public" id="ccg_public" type="checkbox" ' . $public_checked . ' value="1"> <label for="ccg_public">Visible to the Public</label>';
-    //         echo '</div>';
-    //     }
-    // }
 
         public static function colbygroups_dropdown_users( $query_args, $r ) {
                     global $wpdb;
@@ -407,116 +365,6 @@ jQuery('#available-groups div').each( function(index) {
 EOT;
     }
 
-    public static function colbygroups_save_meta_box_data( $post_id ) {
-        global $wpdb;
-
-        
-        update_post_meta(
-            $post_id,
-            'ccg_publicly_viewable',
-            $_POST['ccg_publicly_viewable'] && 'on' === $_POST['ccg_publicly_viewable']
-        );
-        
-        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
-            return;
-
-        /* if the parent is restricted... */
-        list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
-        if ( 'true' == $parent_limit ) {
-            /* ...and the public override input is not specified delete the public override setting */
-            if ( empty( $_POST[ 'ccg_public' ] ) ) {
-                delete_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, 0 );
-            } else if ( '1' == $_POST[ 'ccg_public' ] && '1' != $_POST['ccg_limit_groups'] ) {
-                add_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, 0, true ) || update_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, 0 );
-            }
-        
-            /* ...and the public override input is specified set the public override setting */
-        }
-        
-        if ( empty( $_POST[ 'ccg_limit_groups' ] ) || '1' != $_POST['ccg_limit_groups'] ) {
-            /* not limiting this page by Colby groups */
-            delete_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, true );
-            return;
-        }
-        
-        /* save the 'ccg_limit_groups_' . $post_id post_meta */
-        add_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, true, true ) || update_post_meta( $post_id, 'ccg_limit_groups_' . $post_id, true );
-        
-        $dbprefix = $wpdb->base_prefix;
-        if ( get_current_blog_id() != 1 ) { $dbprefix .= get_current_blog_id() . '_'; }
-        
-        /* get all of the currently assigned groups */
-        $savedGroups = $wpdb->get_results(
-            $wpdb->prepare( "SELECT " . $dbprefix . "cc_group_roles.roles, " . $dbprefix . "cc_group_roles.ID, ".$wpdb->base_prefix."ccg_groups.group_name, ".$wpdb->base_prefix."ccg_groups.ID as group_id FROM ".$wpdb->base_prefix."ccg_groups JOIN " . $dbprefix . "cc_group_roles ON ".$wpdb->base_prefix."ccg_groups.ID=" . $dbprefix . 'cc_group_roles.group_id WHERE ' . $dbprefix . 'cc_group_roles.post_id=' . $post_id . ' ORDER BY '.$wpdb->base_prefix."ccg_groups.group_name", ARRAY_N )
-        );
-        
-        if ( $savedGroups ) {
-            foreach ( $savedGroups as $oldGroup ) {
-                /* for each currently assigned group, delete those that are not in the new groups list */
-                $oldGroupFound = 0;
-                
-                foreach ( $_POST['group'] as $newGroup ) {
-                    $parts = explode( ':', $newGroup );
-                    $newGroupID = $parts[0];
-                    $newGroupRole = $parts[1];
-                    
-                    if ( $oldGroup->group_id == $newGroupID ) {
-                        $oldGroupFound = 1;
-                    }
-                }
-                
-                if ( $oldGroupFound == 0 ) {
-                    $wpdb->delete( $dbprefix . "cc_group_roles", array( 'ID' => $oldGroup->ID ) );
-                }
-            }
-        }
-        
-        if ( array_key_exists( 'group', $_POST ) ) {
-            foreach ( $_POST['group'] as $group ) {
-                $oldGroupFound = 0;
-                $oldGroupRole = '';
-                $oldGroupID = 0;
-            
-                $parts = explode( ':', $group );
-                $newGroupID = $parts[0];
-                $newGroupRole = $parts[1];
-
-                /* for each new group */
-                foreach ( $savedGroups as $oldGroup ) {
-                    if ( $newGroupID == $oldGroup->group_id ) {
-                        $oldGroupFound = 1;
-                        $oldGroupRole = $oldGroup->roles;
-                        $oldGroupID = $oldGroup->ID;
-                    }
-                }
-            
-                if ( $oldGroupFound == 0 ) {
-                    /* if no old group then add the new group */
-                    $newGroupRoleSerialized = serialize( array($newGroupRole) );
-                
-                    $data=array( 
-                        'group_id' => $newGroupID,
-                        'roles' => $newGroupRoleSerialized,
-                        'post_id' => $post_id 
-                    );
-                
-                    $wpdb->insert( $dbprefix . "cc_group_roles", $data, array( '%d', '%s' ) );
-                } else {
-                    $newGroupRoleSerialized = serialize( array( $newGroupRole ) );
-                
-                    /* update the role if different from the old role */
-                    if ( $newGroupRoleSerialized != $oldGroupRole ) {
-                        $wpdb->update( $dbprefix . "cc_group_roles", 
-                                        array( 'roles' => $newGroupRoleSerialized ),
-                                        array( 'ID' => $oldGroupID ),
-                                        array( '%s' ),
-                                        array( '%d' ) 
-                        );
-                    }
-                }
-            }
-        }
-    }
     
     public static function add_privacy_options( $options ) {
         echo '<label class="checkbox" for="blog-private' . CCG_BLOG_PUBLIC_COLBY_ONLY . '"><input id="blog-private' . CCG_BLOG_PUBLIC_COLBY_ONLY . '" type="radio" name="blog_public" value="' . CCG_BLOG_PUBLIC_COLBY_ONLY . '" ';

@@ -122,14 +122,19 @@ class Capabilities {
         $user_ID = get_current_user_id();
 
         if ( !is_admin() ) {
-            if ( "1" === get_post_meta( $post->ID, 'ccg_publicly_viewable', true ) ) {
+            $is_restricted = get_post_meta( $post->ID, 'colby_groups_meta_restrcit_to_groups', true);
+
+            if (!$is_restricted) {
                 return;
             }
 
-            if ( '1' == get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true ) || CCG_BLOG_PUBLIC_COLBY_ONLY == get_option( 'blog_public' ) ) {
+            $groups = get_post_meta( $post->ID, 'colby_groups_meta_selected_groups', true);
+
+
+            if ( !$is_restricted || CCG_BLOG_PUBLIC_COLBY_ONLY === get_option( 'blog_public' ) ) {
                 /* This blog is marked as "Colby Groups Only" */
 
-                if ( 0 == array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
+                if ( 0 === array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
                     $protocol = $_SERVER['SERVER_PORT'] == '80' ? 'http' : 'https';
                     wp_redirect( $protocol . '://' . $_SERVER['SERVER_NAME'] . '/ColbyMaster/login/?' . $_SERVER['SCRIPT_URI'] );
                     exit();

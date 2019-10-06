@@ -19,6 +19,12 @@
         }
     },
     "dependencies": {
+        "@wordpress/components": "^8.3.1",
+        "@wordpress/data": "^4.9.1",
+        "@wordpress/edit-post": "^3.8.1",
+        "@wordpress/editor": "^9.7.1",
+        "@wordpress/element": "^2.8.1",
+        "@wordpress/plugins": "^2.7.1",
         "colby-loader": "^2.0.1",
         "lodash": "^4.17.5",
         "prop-types": "^15.5.10",
