@@ -1,8 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { registerPlugin } from '@wordpress/plugins';
 import AdminPage from './AdminPage.js';
 import PostSidebar from './PostSidebar.js';
+
+const { registerPlugin } = wp.plugins;
 
 registerPlugin('colby-groups', {
     icon: 'smiley',
@@ -14,4 +15,6 @@ registerPlugin('colby-groups', {
     ),
 });
 
-ReactDOM.render(<AdminPage />, document.querySelector('#colby-groups-admin-page'));
+if (document.querySelector('#colby-groups-admin-page')) {
+    ReactDOM.render(<AdminPage />, document.querySelector('#colby-groups-admin-page'));
+}

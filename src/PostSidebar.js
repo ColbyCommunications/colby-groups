@@ -3,15 +3,15 @@ import PropTypes from 'prop-types';
 import Loader from 'colby-loader';
 import Autosuggest from 'react-autosuggest';
 import _remove from 'lodash/remove';
-import { Fragment } from '@wordpress/element';
-import { withSelect, withDispatch } from '@wordpress/data';
-import { PluginSidebar } from '@wordpress/edit-post';
-import { CheckboxControl, PanelBody, PanelRow } from '@wordpress/components';
 import style from './style.scss';
 
+const { Fragment } = wp.element;
+const Fetch = wp.apiFetch;
+const { withSelect, withDispatch } = wp.data;
+const { PluginSidebar } = wp.editPost;
+const { CheckboxControl, PanelBody, PanelRow } = wp.components;
 const ColbyBase = window.colbyBase || {};
 const groupsEndpoint = `${ColbyBase.siteProtocol}${ColbyBase.host}/wp-json/colby-groups/v1/groups`;
-// const groupsForPostEndpoint = `${ColbyBase.siteProtocol}${ColbyBase.host}/wp-json/colby-groups/v1/groupsForPost/%blogId%/%postId%`;
 
 const mapSelectToProps = select => {
     return {
@@ -66,15 +66,12 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
             loading: true,
         });
 
-        const $this = this;
-        fetch(groupsEndpoint)
-            .then(response => response.json())
-            .then(json => {
-                $this.setState({
-                    groupData: json,
-                    loading: false,
-                });
+        Fetch({ url: groupsEndpoint }).then(response => {
+            this.setState({
+                groupData: response,
+                loading: false,
             });
+        });
     };
 
     getSuggestions = value => {
@@ -168,35 +165,36 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
                                         {selectedGroups.length > 0 && (
                                             <div>
                                                 <table className={style.colbyGroupsPostTable}>
-                                                    <tr
-                                                        style={{
-                                                            backgroundColor: '#426a92',
-                                                            color: '#fff',
-                                                        }}
-                                                    >
-                                                        <th>Name</th>
-                                                        <th>&nbsp;</th>
-                                                    </tr>
-                                                    {selectedGroups.map(group => (
-                                                        <tr key={group.group_name}>
-                                                            <td>{group.group_name}</td>
-                                                            <td>
-                                                                <button
-                                                                    style={{
-                                                                        color: 'red',
-                                                                        cursor: 'pointer',
-                                                                    }}
-                                                                    type="button"
-                                                                    onClick={this.removeGroup.bind(
-                                                                        this,
-                                                                        group.ID
-                                                                    )}
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </td>
+                                                    <thead>
+                                                        <tr
+                                                            style={{
+                                                                backgroundColor: '#426a92',
+                                                                color: '#fff',
+                                                            }}
+                                                        >
+                                                            <th>Name</th>
+                                                            <th>&nbsp;</th>
                                                         </tr>
-                                                    ))}
+                                                    </thead>
+                                                    <tbody>
+                                                        {selectedGroups.map(group => (
+                                                            <tr key={group.group_name}>
+                                                                <td>{group.group_name}</td>
+                                                                <td>
+                                                                    <button
+                                                                        className={style.deleteBtn}
+                                                                        type="button"
+                                                                        onClick={this.removeGroup.bind(
+                                                                            this,
+                                                                            group.ID
+                                                                        )}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
                                                 </table>
                                             </div>
                                         )}

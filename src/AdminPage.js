@@ -1,14 +1,16 @@
 /* eslint-disable jsx-a11y/label-has-for */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import Loader from 'colby-loader';
 import Autosuggest from 'react-autosuggest';
 import _remove from 'lodash/remove';
 import style from './style.scss';
 
+const Fetch = wp.apiFetch;
 const ColbyBase = window.colbyBase || {};
 const groupsEndpoint = `${ColbyBase.siteProtocol}${ColbyBase.host}/wp-json/colby-groups/v1/groups`;
+const siteGroupsEndpointPost = '/colby-groups/v1/set-site-groups';
+const siteGroupsEndpointGet = '/colby-groups/v1/get-site-groups';
 
 const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
     state = {
@@ -21,6 +23,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
 
     componentDidMount = () => {
         this.getGroups();
+        this.getSiteGroups();
     };
 
     getGroups = () => {
@@ -28,15 +31,20 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
             loading: true,
         });
 
-        const $this = this;
-        fetch(groupsEndpoint)
-            .then(response => response.json())
-            .then(json => {
-                $this.setState({
-                    groupData: json,
-                    loading: false,
-                });
+        Fetch({ url: groupsEndpoint }).then(response => {
+            this.setState({
+                groupData: response,
             });
+        });
+    };
+
+    getSiteGroups = () => {
+        Fetch({ path: siteGroupsEndpointGet }).then(response => {
+            this.setState({
+                selectedGroups: response.groups,
+                loading: false,
+            });
+        });
     };
 
     getSuggestions = value => {
@@ -70,6 +78,15 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
         this.setState({
             filter: '',
             selectedGroups,
+        });
+    };
+
+    handleSubmit = () => {
+        const { selectedGroups } = this.state;
+        Fetch({
+            path: siteGroupsEndpointPost,
+            method: 'POST',
+            data: { groups: selectedGroups },
         });
     };
 
@@ -114,38 +131,49 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                         {selectedGroups.length > 0 && (
                             <div style={{ width: '50%' }}>
                                 <table className={style.colbyGroupsPostTable}>
-                                    <tr
-                                        style={{
-                                            backgroundColor: '#426a92',
-                                            color: '#fff',
-                                        }}
-                                    >
-                                        <th>Name</th>
-                                        <th>&nbsp;</th>
-                                    </tr>
-                                    {selectedGroups.map(group => (
-                                        <tr key={group.group_name}>
-                                            <td>{group.group_name}</td>
-                                            <td>
-                                                <button
-                                                    style={{
-                                                        color: 'red',
-                                                        cursor: 'pointer',
-                                                    }}
-                                                    type="button"
-                                                    onClick={this.removeGroup.bind(this, group.ID)}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </td>
+                                    <thead>
+                                        <tr
+                                            style={{
+                                                backgroundColor: '#426a92',
+                                                color: '#fff',
+                                            }}
+                                        >
+                                            <th>Name</th>
+                                            <th>&nbsp;</th>
                                         </tr>
-                                    ))}
+                                    </thead>
+                                    <tbody>
+                                        {selectedGroups.map(group => (
+                                            <tr
+                                                key={group.group_name}
+                                                style={{
+                                                    backgroundColor: '#fff',
+                                                }}
+                                            >
+                                                <td>{group.group_name}</td>
+                                                <td>
+                                                    <button
+                                                        className={style.deleteBtn}
+                                                        type="button"
+                                                        onClick={this.removeGroup.bind(
+                                                            this,
+                                                            group.ID
+                                                        )}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
                                 </table>
                                 <div style={{ marginTop: '10px' }}>
                                     <button
                                         type="button"
                                         disabled={selectedGroups.length === 0}
+                                        className={style.saveBtn}
                                         style={{ float: 'right' }}
+                                        onClick={this.handleSubmit}
                                     >
                                         Save
                                     </button>
