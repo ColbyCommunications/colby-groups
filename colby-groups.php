@@ -13,6 +13,7 @@
    Copyright (C) 2014-2015 Colby College - use with permission only!!!
 */
 define( 'CCG_RESTRICT_EDITORS', 1);
+define( 'PLUGIN_URL', trailingslashit( plugin_dir_url( __FILE__ ) ) );
 require plugin_dir_path( __FILE__ ) . '/inc/classes/class-colby-groups.php';
 require plugin_dir_path( __FILE__ ) . '/inc/classes/class-colby-ticket.php';
 require plugin_dir_path( __FILE__ ) . '/inc/classes/class-capabilities.php';

@@ -24,17 +24,44 @@ class ColbyGroups {
         add_action( 'wpmu_new_blog', [ $this, 'activate' ] );
         add_action('init', [ $this, 'sidebar_plugin_register' ] );
         add_action( 'rest_api_init', [ $this,  'register_routes' ] );
-        add_action( 'admin_enqueue_scripts', [ $this,  'enqueue_backend' ] );
+        add_action( 'admin_enqueue_scripts', [ $this,  'colby_groups_script_enqueue' ] );
+        add_action( 'wp_enqueue_scripts', [$this, 'colby_groups_script_enqueue' ]  );
     }
 
-    public static function enqueue_backend() {
-        // die(var_dump(get_current_screen()));
-        if (get_current_screen()->id === 'users_page_colbyGroups/colbyGroups') {
-            wp_enqueue_script( 'wp-element' );
-            wp_enqueue_script( 'wp-data' );
-            wp_enqueue_script( 'wp-plugins' );
-            wp_enqueue_script( 'wp-edit-post' );
-            wp_enqueue_script( 'wp-api-fetch' );
+    public static function colby_groups_script_enqueue() {
+        $bundle_js_path = WP_PLUGIN_DIR . '/colby-groups/build/js.bundle.filename';
+        $bundle_css_path = WP_PLUGIN_DIR . '/colby-groups/build/css.bundle.filename';
+
+        // I don't love this, but only load full contents if on dev and running webpack-dev-server
+        // otherwise use relative path from the plugin root
+        if ("ON" !== getenv('LANDO')) {
+            $js_bundle_filename_contents = PLUGIN_URL . fgets(fopen($bundle_js_path, 'r'));
+            if (file_exists($bundle_css_path)) {
+                $css_bundle_filename_contents = PLUGIN_URL . fgets(fopen($bundle_css_path, 'r'));
+            }
+        } else {
+            $js_bundle_filename_contents = fgets(fopen($bundle_js_path, 'r'));
+            if (file_exists($bundle_css_path)) {
+                $css_bundle_filename_contents = fgets(fopen($bundle_css_path, 'r'));
+            }
+        }
+
+        wp_enqueue_script( 
+            'colby-groups',
+            $js_bundle_filename_contents,
+            ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-plugins', 'wp-i18n', 'wp-components'],
+            '',
+            true    
+        );
+
+        if (file_exists($bundle_css_path)) {
+            wp_enqueue_style( 
+                'colby-groups',
+                $css_bundle_filename_contents,
+                [],
+                '',
+                'screen'
+            );
         }
     }
 
