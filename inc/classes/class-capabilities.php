@@ -6,6 +6,7 @@
  */
 namespace ColbyCollege\Plugins\ColbyGroups;
 define( 'CCG_RESTRICT_EDITORS', 1);
+define( 'CCG_BLOG_PUBLIC_COLBY_ONLY', -1 );
 
 /**
  * Capabilities class.
@@ -122,18 +123,16 @@ class Capabilities {
         $user_ID = get_current_user_id();
 
         if ( !is_admin() ) {
-            $is_restricted = get_post_meta( $post->ID, 'colby_groups_meta_restrcit_to_groups', true);
 
-            if (!$is_restricted) {
-                return;
-            }
+            // get groups for individual post
+            $is_post_restricted = get_post_meta( $post->ID, 'colby_groups_meta_restrcit_to_groups', true);
+            $post_groups = get_post_meta( $post->ID, 'colby_groups_meta_selected_groups', true);
+            $is_site_restricted = CCG_BLOG_PUBLIC_COLBY_ONLY === get_option( 'blog_public' );
 
-            $groups = get_post_meta( $post->ID, 'colby_groups_meta_selected_groups', true);
-
-
-            if ( !$is_restricted || CCG_BLOG_PUBLIC_COLBY_ONLY === get_option( 'blog_public' ) ) {
+            if ($is_site_restricted ) {
                 /* This blog is marked as "Colby Groups Only" */
-
+                
+                // no cookie, they need to login
                 if ( 0 === array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
                     $protocol = $_SERVER['SERVER_PORT'] == '80' ? 'http' : 'https';
                     wp_redirect( $protocol . '://' . $_SERVER['SERVER_NAME'] . '/ColbyMaster/login/?' . $_SERVER['SCRIPT_URI'] );
@@ -141,24 +140,21 @@ class Capabilities {
                 } else {
                     /* error_log( "CCG: can this user access this Colby Only blog???" ); */
 
-                    $ad_read_ok = self::ad_user_can_read( $user_ID, get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true ), $post->ID );
-                    $cc_read_ok = self::cc_user_can_read( $user_ID, get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true ), $post->ID );
+                    $ad_read_ok = self::ad_user_can_read( $user_ID, $groups, $post->ID );
+                    $cc_read_ok = self::cc_user_can_read( $user_ID, $groups, $post->ID );
                     $read_ok = $ad_read_ok + $cc_read_ok;
 
                     /* for each role, does this role have the read post capability? */
 
                     /* if no read post capability for all groups/roles then redirect to the 403 page */
                     if ( 0 == $read_ok ) {
-                        /* error_log( "CCG: this user should be redirected to the 403 page" ); */
-                        // header( 'HTTP/1.1 403 Unauthorized' );
-                        // header( 'Content-Type: text/html' );
-                        // readfile( LOCATION_403 );
+                        header( 'Status: 403 Forbidden', true, 403 );
+                        
+                        // need to response 403 and have current theme show page
                         exit();
                     }
-                
-                    /* error_log( "CCG: allowing read access" ); */
                 }
-            } else if ( '0' != get_post_meta( $post->ID, 'ccg_limit_groups_' . $post->ID, true ) ) {
+            } else if ( $is_post_restricted ) {
                 /* check this post, its parent page might be private */
                 
                 list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
@@ -176,10 +172,7 @@ class Capabilities {
                             wp_redirect( $protocol . '://' . $_SERVER['SERVER_NAME'] . '/ColbyMaster/login/?' . $_SERVER['SCRIPT_URI'] );
                             exit();
                         } else {
-                            /* error_log( "CCG: this user should be redirected to the 403 page" ); */
-                            // header( 'HTTP/1.1 403 Unauthorized' );
-                            // header( 'Content-Type: text/html' );
-                            // readfile( LOCATION_403 );
+\                           header( 'Status: 403 Forbidden', true, 403 );
                             exit();
                         }
                     }
@@ -192,7 +185,7 @@ class Capabilities {
     public static function parent_limit( $post_parent ) {
         $parent = get_post( $post_parent );
         
-        $limit = ( get_post_meta( $post_parent, 'ccg_limit_groups_' . $post_parent, true ) ) ? true : false;
+        $limit = ( get_post_meta( $post_parent, 'colby_groups_meta_restrcit_to_groups', true) ) ? true : false;
         if ( 0 != $parent->post_parent && false == $limit ) { return self::parent_limit( $parent->post_parent ); }
         return array( $limit, $parent->ID );
     }
