@@ -7,6 +7,7 @@
 
 namespace ColbyCollege\Plugins\ColbyGroups;
 define( 'CCG_BLOG_PUBLIC_COLBY_ONLY', -1 );
+define( 'CCG_RESTRICT_EDITORS', 1);
 
 /**
  * Dashboard class.

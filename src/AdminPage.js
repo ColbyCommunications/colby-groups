@@ -19,6 +19,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
         loading: false,
         filter: '',
         suggestions: [],
+        roles: {},
     };
 
     componentDidMount = () => {
@@ -33,7 +34,8 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
 
         Fetch({ url: groupsEndpoint }).then(response => {
             this.setState({
-                groupData: response,
+                groupData: response.groups,
+                roles: response.roles,
             });
         });
     };
@@ -60,6 +62,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
     onSuggestionSelect = (event, { suggestionValue }) => {
         const { groupData, selectedGroups } = this.state;
         const groupObj = groupData.find(g => g.group_name === suggestionValue);
+        groupeObj.role = 'administrator';
         let newGroups = [];
         if (selectedGroups) {
             newGroups = [...selectedGroups, groupObj];
@@ -90,9 +93,18 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
         });
     };
 
-    render() {
-        const { loading, groupData, filter, suggestions, selectedGroups } = this.state;
+    handleRoleChange = (group, event) => {
+        const { selectedGroups } = this.state;
+        const groupObj = selectedGroups.find(g => g.group_name === group.group_name);
+        groupObj.role = event.target.value;
 
+        this.setState({
+            selectedGroups,
+        });
+    };
+
+    render() {
+        const { loading, groupData, filter, suggestions, selectedGroups, roles } = this.state;
         return (
             <div style={{ paddingTop: '40px' }}>
                 {loading && <Loader loading type="inline" />}
@@ -139,6 +151,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                                             }}
                                         >
                                             <th>Name</th>
+                                            <th>Role</th>
                                             <th>&nbsp;</th>
                                         </tr>
                                     </thead>
@@ -151,6 +164,21 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                                                 }}
                                             >
                                                 <td>{group.group_name}</td>
+                                                <td>
+                                                    <select
+                                                        onBlur={this.handleRoleChange.bind(
+                                                            null,
+                                                            group
+                                                        )}
+                                                        value={group.role}
+                                                    >
+                                                        {Object.keys(roles).map(key => (
+                                                            <option value={key} key={key}>
+                                                                {roles[key].name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </td>
                                                 <td>
                                                     <button
                                                         className={style.deleteBtn}

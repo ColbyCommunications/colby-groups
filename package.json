@@ -10,7 +10,7 @@
         "testjs": "colby-package-test",
         "test": "colby-package-test --withphp",
         "format": "colby-package-format --withphp",
-        "start": "webpack-dev-server --port=9000 --config webpack.config.dev.js",
+        "start": "webpack-dev-server --config webpack.config.dev.js",
         "build": "webpack --config webpack.config.prod.js"
     },
     "husky": {

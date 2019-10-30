@@ -140,8 +140,8 @@ class Capabilities {
                 } else {
                     /* error_log( "CCG: can this user access this Colby Only blog???" ); */
 
-                    $ad_read_ok = self::ad_user_can_read( $user_ID, $groups, $post->ID );
-                    $cc_read_ok = self::cc_user_can_read( $user_ID, $groups, $post->ID );
+                    $ad_read_ok = self::ad_user_can_read( $user_ID, $post_groups, $post->ID );
+                    $cc_read_ok = self::cc_user_can_read( $user_ID, $post_groups, $post->ID );
                     $read_ok = $ad_read_ok + $cc_read_ok;
 
                     /* for each role, does this role have the read post capability? */
@@ -155,10 +155,12 @@ class Capabilities {
                     }
                 }
             } else if ( $is_post_restricted ) {
+                // die("here");
                 /* check this post, its parent page might be private */
                 
                 list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
-                if ( true == $parent_limit ) {
+
+                if ( true === $parent_limit ) {
                     
                     $ad_read_ok = self::ad_user_can_read( $user_ID, $parent_limit, $parent_id );
                     $cc_read_ok = self::cc_user_can_read( $user_ID, $parent_limit, $parent_id );
@@ -168,11 +170,28 @@ class Capabilities {
                     if ( 0 == $read_ok ) {
                         if ( 0 == array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
                             /* if the user is not authenticated, send them to the login page */
-                            $protocol = $_SERVER['SERVER_PORT'] == '80' ? 'http' : 'https';
-                            wp_redirect( $protocol . '://' . $_SERVER['SERVER_NAME'] . '/ColbyMaster/login/?' . $_SERVER['SCRIPT_URI'] );
+                            $redirect = $_SERVER['REQUEST_URI'];
+                            wp_redirect("https://www.colby.edu/ColbyMaster/login/?https://" . $_SERVER['HTTP_HOST'] . $redirect);
                             exit();
                         } else {
-\                           header( 'Status: 403 Forbidden', true, 403 );
+                            header( 'Status: 403 Forbidden', true, 403 );
+                            exit();
+                        }
+                    }
+                } else {
+                    $ad_read_ok = self::ad_user_can_read( $user_ID, $post_groups, $post->ID );
+                    $cc_read_ok = self::cc_user_can_read( $user_ID, $post_groups, $post->ID );
+                    $read_ok = $ad_read_ok + $cc_read_ok;
+                    
+                    /* if no read post capability for all groups/roles then redirect to the Login or 403 page */
+                    if ( 0 == $read_ok ) {
+                        if ( 0 == array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
+                            /* if the user is not authenticated, send them to the login page */
+                            $redirect = $_SERVER['REQUEST_URI'];
+                            wp_redirect("https://www.colby.edu/ColbyMaster/login/?https://" . $_SERVER['HTTP_HOST'] . $redirect);
+                            exit();
+                        } else {
+                            header( 'Status: 403 Forbidden', true, 403 );
                             exit();
                         }
                     }
@@ -185,8 +204,10 @@ class Capabilities {
     public static function parent_limit( $post_parent ) {
         $parent = get_post( $post_parent );
         
-        $limit = ( get_post_meta( $post_parent, 'colby_groups_meta_restrcit_to_groups', true) ) ? true : false;
-        if ( 0 != $parent->post_parent && false == $limit ) { return self::parent_limit( $parent->post_parent ); }
+        $limit = ( get_post_meta( $post_parent, 'colby_groups_meta_restrict_to_groups', true) ) ? true : false;
+        if ( 0 != $parent->post_parent && false == $limit ) { 
+            return self::parent_limit( $parent->post_parent ); 
+        }
         return array( $limit, $parent->ID );
     }
     
@@ -194,11 +215,12 @@ class Capabilities {
         global $wpdb;
         
         $dbprefix = $wpdb->base_prefix;
-        if ( get_current_blog_id() != 1 ) { $dbprefix .= get_current_blog_id() . '_'; }
-    
+        if ( get_current_blog_id() !== 1 ) { 
+            $dbprefix .= get_current_blog_id() . '_'; 
+        }
         /* look for the post_id in group_roles if the post's status is "private" */
         $post_id_sql = '';
-        if ( true == $post_limit ) {
+        if ( true === $post_limit ) {
             $post_id_sql = 'OR ' . $dbprefix . 'cc_group_roles.post_id=' . $post_id;
         }
     
@@ -206,7 +228,7 @@ class Capabilities {
         $roles = $wpdb->get_row(
             $wpdb->prepare( "SELECT " . $dbprefix . "cc_group_roles.roles FROM " . $wpdb->base_prefix . "ccg_group_members JOIN " . $dbprefix . "cc_group_roles ON " . $wpdb->base_prefix . "ccg_group_members.group_id=" . $dbprefix . "cc_group_roles.group_id WHERE " . $wpdb->base_prefix . "ccg_group_members.user_id=" . $user_ID . ' AND ( ' . $dbprefix . 'cc_group_roles.post_id=0 ' . $post_id_sql . ' )', ARRAY_N )
         );
-    
+        die(var_dump($roles));
         $read_ok = 0;
     
         if ( $roles ) {

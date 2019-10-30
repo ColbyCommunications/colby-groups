@@ -8,7 +8,7 @@ import style from './style.scss';
 const { Fragment } = wp.element;
 const Fetch = wp.apiFetch;
 const { withSelect, withDispatch } = wp.data;
-const { PluginSidebar } = wp.editPost;
+const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editPost;
 const { CheckboxControl, PanelBody, PanelRow } = wp.components;
 const ColbyBase = window.colbyBase || {};
 const groupsEndpoint = `${ColbyBase.siteProtocol}${ColbyBase.host}/wp-json/colby-groups/v1/groups`;
@@ -16,7 +16,7 @@ const groupsEndpoint = `${ColbyBase.siteProtocol}${ColbyBase.host}/wp-json/colby
 const mapSelectToProps = select => {
     return {
         restrictToGroups: select('core/editor').getEditedPostAttribute('meta')
-            .colby_groups_meta_restrcit_to_groups,
+            .colby_groups_meta_restrict_to_groups,
         selectedGroups: select('core/editor').getEditedPostAttribute('meta')
             .colby_groups_meta_selected_groups,
     };
@@ -26,7 +26,7 @@ const mapDispatchToProps = dispatch => {
     return {
         setRestrictToGroups: value => {
             dispatch('core/editor').editPost({
-                meta: { colby_groups_meta_restrcit_to_groups: value },
+                meta: { colby_groups_meta_restrict_to_groups: value },
             });
         },
         setSelectedGroups: value => {
@@ -46,6 +46,7 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
         loading: false,
         filter: '',
         suggestions: [],
+        roles: {},
     };
 
     componentDidMount = () => {
@@ -68,7 +69,8 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
 
         Fetch({ url: groupsEndpoint }).then(response => {
             this.setState({
-                groupData: response,
+                groupData: response.groups,
+                roles: response.roles,
                 loading: false,
             });
         });
@@ -89,6 +91,7 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
         const { groupData, selectedGroups } = this.state;
         const groupObj = groupData.find(g => g.group_name === suggestionValue);
         let newGroups = [];
+        groupeObj.role = 'administrator';
         if (selectedGroups) {
             newGroups = [...selectedGroups, groupObj];
         } else {
@@ -112,14 +115,27 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
         setSelectedGroups(JSON.stringify(selectedGroups));
     };
 
+    handleRoleChange = (group, event) => {
+        const { selectedGroups } = this.state;
+        const groupObj = selectedGroups.find(g => g.group_name === group.group_name);
+        groupObj.role = event.target.value;
+
+        this.setState({
+            selectedGroups,
+        });
+    };
+
     render() {
         // console.log(this.state);
-        const { loading, groupData, filter, suggestions, selectedGroups } = this.state;
+        const { loading, groupData, filter, suggestions, selectedGroups, roles } = this.state;
         const { restrictToGroups } = this.props;
 
         return (
             <div>
                 <Fragment>
+                    <PluginSidebarMoreMenuItem target="my-plugin-sidebar" icon="groups">
+                        Colby Groups
+                    </PluginSidebarMoreMenuItem>
                     <PluginSidebar name="my-plugin-sidebar" icon="groups" title="Colby Groups">
                         <PanelBody title="Colby Groups" icon="groups" initialOpen>
                             <PanelRow>
@@ -173,6 +189,7 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
                                                             }}
                                                         >
                                                             <th>Name</th>
+                                                            <th>Role</th>
                                                             <th>&nbsp;</th>
                                                         </tr>
                                                     </thead>
@@ -180,6 +197,29 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
                                                         {selectedGroups.map(group => (
                                                             <tr key={group.group_name}>
                                                                 <td>{group.group_name}</td>
+                                                                <td>
+                                                                    <select
+                                                                        onBlur={this.handleRoleChange.bind(
+                                                                            null,
+                                                                            group
+                                                                        )}
+                                                                        value={group.role}
+                                                                    >
+                                                                        {Object.keys(roles).map(
+                                                                            key => (
+                                                                                <option
+                                                                                    value={key}
+                                                                                    key={key}
+                                                                                >
+                                                                                    {
+                                                                                        roles[key]
+                                                                                            .name
+                                                                                    }
+                                                                                </option>
+                                                                            )
+                                                                        )}
+                                                                    </select>
+                                                                </td>
                                                                 <td>
                                                                     <button
                                                                         className={style.deleteBtn}
