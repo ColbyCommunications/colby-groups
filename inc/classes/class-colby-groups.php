@@ -22,12 +22,12 @@ class ColbyGroups {
 	public function __construct() {
         add_action( 'delete_blog', [ $this, 'delete_blog' ] );
         add_action( 'wpmu_new_blog', [ $this, 'activate' ] );
-        add_action('init', [ $this, 'colby_groups_add_meta' ] );
+        add_action('init', [ $this, 'sidebar_plugin_register' ] );
         add_action( 'rest_api_init', [ $this,  'register_routes' ] );
         add_action( 'admin_enqueue_scripts', [ $this,  'colby_groups_script_enqueue' ] );
         add_action( 'wp_enqueue_scripts', [$this, 'colby_groups_script_enqueue' ]  );
-        add_action( 'enqueue_block_editor_assets', [$this, 'colby_groups_script_enqueue' ]  );
     }
+
 
     public static function colby_groups_script_enqueue() {
         $bundle_js_path = WP_PLUGIN_DIR . '/colby-groups/build/js.bundle.filename';
@@ -36,7 +36,7 @@ class ColbyGroups {
         $bundle_js_contents = fgets(fopen($bundle_js_path, 'r'));
         $is_dev_server = substr($bundle_js_contents, 0, 4) === "http";
 
-        // if webpack-dev-server is running, use a different path structure
+        // if webpack-dev-server is running, use a different path strucutre
         if (!$is_dev_server) {
             $js_bundle_filename_contents = PLUGIN_URL . fgets(fopen($bundle_js_path, 'r'));
             if (file_exists($bundle_css_path)) {
@@ -52,7 +52,7 @@ class ColbyGroups {
         wp_enqueue_script( 
             'colby-groups',
             $js_bundle_filename_contents,
-            ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-plugins', 'wp-i18n', 'wp-components', 'wp-blocks'],
+            ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-plugins', 'wp-i18n', 'wp-components'],
             '',
             true    
         );
@@ -61,25 +61,33 @@ class ColbyGroups {
             wp_enqueue_style( 
                 'colby-groups',
                 $css_bundle_filename_contents,
-                ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-plugins', 'wp-i18n', 'wp-components', 'wp-blocks'],
+                [],
                 '',
                 'screen'
             );
         }
     }
 
-    public static function colby_groups_add_meta() {
-        register_meta( 'post', 'colby_groups_meta_restrict_to_groups', array(
+    /** SIDEBAR */
+    public static function sidebar_plugin_register() {
+        register_post_meta(
+            '',
+            'colby_groups_meta_restrict_to_groups',
+            [
                 'show_in_rest' => true,
-                'single' => true,
-                'type' => 'boolean',
-        ) );
-
-        register_meta( 'post', 'colby_groups_meta_selected_groups', array(
-            'type'		=> 'string',
-            'single'	=> true,
-            'show_in_rest'	=> true,
-        ) );
+                'single'        => true,
+                'type'         => 'boolean',
+            ]
+        );
+        register_post_meta(
+            '',
+            'colby_groups_meta_selected_groups',
+            [
+                'show_in_rest' => true,
+                'single'        => true,
+                'type'         => 'string',
+            ]
+        );
     }
     
     public static function activate() {

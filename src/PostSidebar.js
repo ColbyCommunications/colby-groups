@@ -5,11 +5,10 @@ import Autosuggest from 'react-autosuggest';
 import _remove from 'lodash/remove';
 import style from './style.scss';
 
-const { Fragment } = wp.element;
 const Fetch = wp.apiFetch;
 const { withSelect, withDispatch } = wp.data;
-const { PluginSidebar, PluginSidebarMoreMenuItem } = wp.editPost;
-const { CheckboxControl, PanelBody, PanelRow } = wp.components;
+const { PluginPostStatusInfo } = wp.editPost;
+const { Button, Modal, CheckboxControl } = wp.components;
 const ColbyBase = window.colbyBase || {};
 const groupsEndpoint = `${ColbyBase.siteProtocol}${ColbyBase.host}/wp-json/colby-groups/v1/groups`;
 
@@ -47,6 +46,7 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
         filter: '',
         suggestions: [],
         roles: {},
+        isOpen: false,
     };
 
     componentDidMount = () => {
@@ -57,9 +57,16 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
     };
 
     handleCheckboxChange = content => {
-        const { setRestrictToGroups } = this.props;
+        const { setRestrictToGroups, setSelectedGroups } = this.props;
         setRestrictToGroups(content);
-        this.getGroups();
+        if (!content) {
+            this.setState({
+                selectedGroups: [],
+            });
+            setSelectedGroups(JSON.stringify([]));
+        } else {
+            this.getGroups();
+        }
     };
 
     getGroups = () => {
@@ -91,7 +98,7 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
         const { groupData, selectedGroups } = this.state;
         const groupObj = groupData.find(g => g.group_name === suggestionValue);
         let newGroups = [];
-        groupeObj.role = 'administrator';
+        groupObj.role = 'administrator';
         if (selectedGroups) {
             newGroups = [...selectedGroups, groupObj];
         } else {
@@ -117,134 +124,150 @@ const ColbyGroupsConfigSidebar = class ColbyGroupsConfigSidebar extends Componen
 
     handleRoleChange = (group, event) => {
         const { selectedGroups } = this.state;
+        const { setSelectedGroups } = this.props;
         const groupObj = selectedGroups.find(g => g.group_name === group.group_name);
         groupObj.role = event.target.value;
 
         this.setState({
             selectedGroups,
         });
+        setSelectedGroups(JSON.stringify(selectedGroups));
     };
 
-    render() {
-        // console.log(this.state);
+    getModalContent = () => {
         const { loading, groupData, filter, suggestions, selectedGroups, roles } = this.state;
         const { restrictToGroups } = this.props;
 
         return (
-            <div>
-                <Fragment>
-                    <PluginSidebarMoreMenuItem target="my-plugin-sidebar" icon="groups">
-                        Colby Groups
-                    </PluginSidebarMoreMenuItem>
-                    <PluginSidebar name="my-plugin-sidebar" icon="groups" title="Colby Groups">
-                        <PanelBody title="Colby Groups" icon="groups" initialOpen>
-                            <PanelRow>
-                                <CheckboxControl
-                                    label="Restrict to Colby Groups"
-                                    checked={restrictToGroups}
-                                    onChange={this.handleCheckboxChange}
-                                />
-                            </PanelRow>
-                            <PanelRow>
-                                {restrictToGroups && loading && <Loader loading type="inline" />}
-                                {restrictToGroups && !loading && groupData.length > 0 && (
-                                    <div>
-                                        <div style={{ marginBottom: '15px' }}>
-                                            <Autosuggest
-                                                suggestions={suggestions}
-                                                onSuggestionsFetchRequested={({ value }) => {
-                                                    this.setState({
-                                                        suggestions: this.getSuggestions(value),
-                                                    });
-                                                }}
-                                                onSuggestionsClearRequested={() => {
-                                                    this.setState({
-                                                        suggestions: [],
-                                                    });
-                                                }}
-                                                getSuggestionValue={group => group.group_name}
-                                                renderSuggestion={group => (
-                                                    <div>{group.group_name}</div>
-                                                )}
-                                                inputProps={{
-                                                    placeholder: 'Group name',
-                                                    value: filter,
-                                                    onChange: (event, { newValue }) => {
-                                                        this.setState({
-                                                            filter: newValue,
-                                                        });
-                                                    },
-                                                }}
-                                                onSuggestionSelected={this.onSuggestionSelect}
-                                            />
-                                        </div>
-                                        {selectedGroups.length > 0 && (
-                                            <div>
-                                                <table className={style.colbyGroupsPostTable}>
-                                                    <thead>
-                                                        <tr
-                                                            style={{
-                                                                backgroundColor: '#426a92',
-                                                                color: '#fff',
-                                                            }}
-                                                        >
-                                                            <th>Name</th>
-                                                            <th>Role</th>
-                                                            <th>&nbsp;</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {selectedGroups.map(group => (
-                                                            <tr key={group.group_name}>
-                                                                <td>{group.group_name}</td>
-                                                                <td>
-                                                                    <select
-                                                                        onBlur={this.handleRoleChange.bind(
-                                                                            null,
-                                                                            group
-                                                                        )}
-                                                                        value={group.role}
-                                                                    >
-                                                                        {Object.keys(roles).map(
-                                                                            key => (
-                                                                                <option
-                                                                                    value={key}
-                                                                                    key={key}
-                                                                                >
-                                                                                    {
-                                                                                        roles[key]
-                                                                                            .name
-                                                                                    }
-                                                                                </option>
-                                                                            )
-                                                                        )}
-                                                                    </select>
-                                                                </td>
-                                                                <td>
-                                                                    <button
-                                                                        className={style.deleteBtn}
-                                                                        type="button"
-                                                                        onClick={this.removeGroup.bind(
-                                                                            this,
-                                                                            group.ID
-                                                                        )}
-                                                                    >
-                                                                        Delete
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
+            <div className={style.modalContainer}>
+                <CheckboxControl
+                    label="Restrict to Colby Groups"
+                    checked={restrictToGroups}
+                    onChange={this.handleCheckboxChange}
+                />
+                {restrictToGroups && loading && <Loader loading type="inline" />}
+                {restrictToGroups && !loading && groupData.length > 0 && (
+                    <div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <Autosuggest
+                                suggestions={suggestions}
+                                onSuggestionsFetchRequested={({ value }) => {
+                                    this.setState({
+                                        suggestions: this.getSuggestions(value),
+                                    });
+                                }}
+                                onSuggestionsClearRequested={() => {
+                                    this.setState({
+                                        suggestions: [],
+                                    });
+                                }}
+                                getSuggestionValue={group => group.group_name}
+                                renderSuggestion={group => <div>{group.group_name}</div>}
+                                inputProps={{
+                                    placeholder: 'Group name',
+                                    value: filter,
+                                    onChange: (event, { newValue }) => {
+                                        this.setState({
+                                            filter: newValue,
+                                        });
+                                    },
+                                }}
+                                onSuggestionSelected={this.onSuggestionSelect}
+                            />
+                        </div>
+                        {selectedGroups.length > 0 && (
+                            <div>
+                                <table className={style.colbyGroupsPostTable}>
+                                    <thead>
+                                        <tr
+                                            style={{
+                                                backgroundColor: '#444',
+                                                color: '#fff',
+                                            }}
+                                        >
+                                            <th>Name</th>
+                                            <th>Role</th>
+                                            <th>&nbsp;</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedGroups.map(group => (
+                                            <tr key={group.group_name}>
+                                                <td>{group.group_name}</td>
+                                                <td>
+                                                    <select
+                                                        onChange={this.handleRoleChange.bind(
+                                                            null,
+                                                            group
+                                                        )}
+                                                        onBlur={this.handleRoleChange.bind(
+                                                            null,
+                                                            group
+                                                        )}
+                                                        value={group.role}
+                                                    >
+                                                        {Object.keys(roles).map(key => (
+                                                            <option value={key} key={key}>
+                                                                {roles[key].name}
+                                                            </option>
                                                         ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </PanelRow>
-                        </PanelBody>
-                    </PluginSidebar>
-                </Fragment>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className={style.deleteBtn}
+                                                        type="button"
+                                                        onClick={this.removeGroup.bind(
+                                                            this,
+                                                            group.ID
+                                                        )}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
+        );
+    };
+
+    handleSave = () => {
+        const { selectedGroups } = this.state;
+        Fetch({
+            path: siteGroupsEndpointPost,
+            method: 'POST',
+            data: { groups: selectedGroups },
+        });
+    };
+
+    render() {
+        const { isOpen } = this.state;
+
+        return (
+            <PluginPostStatusInfo>
+                <Button isDefault onClick={() => this.setState({ isOpen: true })}>
+                    Colby Groups
+                </Button>
+                {isOpen && (
+                    <Modal
+                        title="Colby Groups"
+                        onRequestClose={() => this.setState({ isOpen: false })}
+                    >
+                        {this.getModalContent()}
+                        <div className={style.modalCloseBtn}>
+                            <Button isDefault onClick={() => this.setState({ isOpen: false })}>
+                                Close
+                            </Button>
+                        </div>
+                    </Modal>
+                )}
+            </PluginPostStatusInfo>
         );
     }
 };
