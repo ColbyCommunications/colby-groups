@@ -56,13 +56,15 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
 
         return inputLength === 0
             ? []
-            : groupData.filter(group => group.group_name.toLowerCase().includes(inputValue));
+            : groupData.filter(group =>
+                  group.group_name.toLowerCase().includes(inputValue)
+              );
     };
 
     onSuggestionSelect = (event, { suggestionValue }) => {
         const { groupData, selectedGroups } = this.state;
         const groupObj = groupData.find(g => g.group_name === suggestionValue);
-        groupeObj.role = 'administrator';
+        groupObj.role = 'administrator';
         let newGroups = [];
         if (selectedGroups) {
             newGroups = [...selectedGroups, groupObj];
@@ -95,7 +97,9 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
 
     handleRoleChange = (group, event) => {
         const { selectedGroups } = this.state;
-        const groupObj = selectedGroups.find(g => g.group_name === group.group_name);
+        const groupObj = selectedGroups.find(
+            g => g.group_name === group.group_name
+        );
         groupObj.role = event.target.value;
 
         this.setState({
@@ -104,7 +108,14 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
     };
 
     render() {
-        const { loading, groupData, filter, suggestions, selectedGroups, roles } = this.state;
+        const {
+            loading,
+            groupData,
+            filter,
+            suggestions,
+            selectedGroups,
+            roles,
+        } = this.state;
         return (
             <div style={{ paddingTop: '40px' }}>
                 {loading && <Loader loading type="inline" />}
@@ -127,7 +138,9 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                                     });
                                 }}
                                 getSuggestionValue={group => group.group_name}
-                                renderSuggestion={group => <div>{group.group_name}</div>}
+                                renderSuggestion={group => (
+                                    <div>{group.group_name}</div>
+                                )}
                                 inputProps={{
                                     placeholder: 'Group name',
                                     value: filter,
@@ -172,16 +185,27 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                                                         )}
                                                         value={group.role}
                                                     >
-                                                        {Object.keys(roles).map(key => (
-                                                            <option value={key} key={key}>
-                                                                {roles[key].name}
-                                                            </option>
-                                                        ))}
+                                                        {Object.keys(roles).map(
+                                                            key => (
+                                                                <option
+                                                                    value={key}
+                                                                    key={key}
+                                                                >
+                                                                    {
+                                                                        roles[
+                                                                            key
+                                                                        ].name
+                                                                    }
+                                                                </option>
+                                                            )
+                                                        )}
                                                     </select>
                                                 </td>
                                                 <td>
                                                     <button
-                                                        className={style.deleteBtn}
+                                                        className={
+                                                            style.deleteBtn
+                                                        }
                                                         type="button"
                                                         onClick={this.removeGroup.bind(
                                                             this,
