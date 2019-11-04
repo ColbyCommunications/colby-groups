@@ -121,17 +121,14 @@ class Capabilities {
 
         /* get the current user's ID */
         $user_ID = get_current_user_id();
-
         if ( !is_admin() ) {
-
             // get groups for individual post
-            $is_post_restricted = get_post_meta( $post->ID, 'colby_groups_meta_restrcit_to_groups', true);
+            $is_post_restricted = get_post_meta( $post->ID, 'colby_groups_meta_restrict_to_groups', true);
             $post_groups = get_post_meta( $post->ID, 'colby_groups_meta_selected_groups', true);
             $is_site_restricted = CCG_BLOG_PUBLIC_COLBY_ONLY === get_option( 'blog_public' );
-
+            
             if ($is_site_restricted ) {
                 /* This blog is marked as "Colby Groups Only" */
-                
                 // no cookie, they need to login
                 if ( 0 === array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
                     $protocol = $_SERVER['SERVER_PORT'] == '80' ? 'http' : 'https';
@@ -179,10 +176,10 @@ class Capabilities {
                         }
                     }
                 } else {
-                    $ad_read_ok = self::ad_user_can_read( $user_ID, $post_groups, $post->ID );
-                    $cc_read_ok = self::cc_user_can_read( $user_ID, $post_groups, $post->ID );
-                    $read_ok = $ad_read_ok + $cc_read_ok;
                     
+                    $ad_read_ok = self::ad_user_can_read( $user_ID, $is_post_restricted, $post->ID );
+                    $cc_read_ok = self::cc_user_can_read( $user_ID, $is_post_restricted, $post->ID );
+                    $read_ok = $ad_read_ok + $cc_read_ok;
                     /* if no read post capability for all groups/roles then redirect to the Login or 403 page */
                     if ( 0 == $read_ok ) {
                         if ( 0 == array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
@@ -220,26 +217,24 @@ class Capabilities {
         }
         /* look for the post_id in group_roles if the post's status is "private" */
         $post_id_sql = '';
-        if ( true === $post_limit ) {
+        if ( $post_limit ) {
             $post_id_sql = 'OR ' . $dbprefix . 'cc_group_roles.post_id=' . $post_id;
         }
     
         /* get AD group roles for this blog */
-        $roles = $wpdb->get_row(
+        $roles = $wpdb->get_results(
             $wpdb->prepare( "SELECT " . $dbprefix . "cc_group_roles.roles FROM " . $wpdb->base_prefix . "ccg_group_members JOIN " . $dbprefix . "cc_group_roles ON " . $wpdb->base_prefix . "ccg_group_members.group_id=" . $dbprefix . "cc_group_roles.group_id WHERE " . $wpdb->base_prefix . "ccg_group_members.user_id=" . $user_ID . ' AND ( ' . $dbprefix . 'cc_group_roles.post_id=0 ' . $post_id_sql . ' )', ARRAY_N )
         );
-        die(var_dump($roles));
         $read_ok = 0;
     
         if ( $roles ) {
-            /* error_log( "CCG: checked roles for " . $user_ID ); */
             foreach ( $roles as $role ) {
                 /* for each role, does this role have the read post capability? */
-                $grouproles = unserialize( $role );
+                $grouproles = unserialize( $role->roles );
                 foreach ( $grouproles as $grouprole ) {
                     $roleperms = get_role( $grouprole );
                     foreach ( $roleperms->capabilities as $cap => $value ) {
-                        if ( ( $cap == 'read' ) && 1 == $value ) {
+                        if ( ( $cap === 'read' ) && $value ) {
                             $read_ok = 1;
                         }
                     }

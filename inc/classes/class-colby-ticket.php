@@ -52,105 +52,101 @@ class ColbyTicket {
 
   }
 
-    // if the user is not logged in but has a ColbyTicket cookie, log them in
-    function ticketCheck() {
-        // global $colby_secret;
-        global $user_ID;
+  // if the user is not logged in but has a ColbyTicket cookie, log them in
+  function ticketCheck() {
+      
+    // global $colby_secret;
+    global $user_ID;
 
-        // get the current user
-        $user = wp_get_current_user();
-        $user_ID = $user->ID;
+    // get the current user
+    $user = wp_get_current_user();
+    $user_ID = $user->ID;
 
-        // xmlrpc.php does it's own authentication mechanism
-        if ( ($user_ID == '') && ( preg_match( '/xmlrpc\.php/', $_SERVER['REQUEST_URI'] ) ) ) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://www.colby.edu/ColbyMaster/ad/");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_setopt($ch, CURLOPT_USERPWD, $_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW']);
-        $output = curl_exec($ch);
+    // xmlrpc.php does it's own authentication mechanism
+    if ( ($user_ID == '') && ( preg_match( '/xmlrpc\.php/', $_SERVER['REQUEST_URI'] ) ) ) {
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, "https://www.colby.edu/ColbyMaster/ad/");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+      curl_setopt($ch, CURLOPT_USERPWD, $_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW']);
+      $output = curl_exec($ch);
 
-        if ( $output == "OK\n" ) {
-            // $user = get_userdatabylogin($_SERVER['PHP_AUTH_USER']);
+      if ( $output == "OK\n" ) {
+          // $user = get_userdatabylogin($_SERVER['PHP_AUTH_USER']);
         $user = get_user_by( 'login', $_SERVER['PHP_AUTH_USER'] );
             set_current_user( $user->ID );
             return;
         }
-        }
-
-        // allow wp-cron.php requests from this server
-        if ( ( preg_match( '/wp-cron\.php\?doing_wp_cron=\d+$/', $_SERVER['REQUEST_URI'] ) ) && ( $_SERVER['REMOTE_ADDR'] == '137.146.30.193' ) ) {
-        // $user = get_userdatabylogin('wp-admin');
-        $user = get_user_by( 'login', $_SERVER['PHP_AUTH_USER'] );
-        set_current_user( $user->ID );
-        return;
-        }
-
-        if ( ($user_ID == '') && (array_key_exists('ColbyTicket',$_COOKIE)) ) {
-        // validate the authentication cookie
-        $cookie_items = explode('&', $_COOKIE['ColbyTicket']);
-        $cookie = array();
-        for ( $i = 0; $i < count($cookie_items);$i = $i + 2 ) {
-            $cookie[$cookie_items[$i]] = $cookie_items[$i + 1];
-        }
-
-        $user_agent = $_SERVER['HTTP_USER_AGENT'];
-        if ( $cookie['hash'] && $cookie['user'] && $cookie['time'] && $cookie['expires'] ) {
-            $hash_vals = array($this->secret, $cookie['ip'], $cookie['time'], $cookie['expires'], $cookie['user'], $cookie['profile'], $cookie['type'], $user_agent);
-            $newhash = md5($colby_secret . md5(join(':',$hash_vals)));
-
-            if ( $newhash == $cookie['hash'] && $cookie['type'] == 'Colby' ) {
-            // valid cookie, get wordpress info for this user
-            //if ( $user=get_userdatabylogin($cookie['user']) ) {
-            if ( $user = get_user_by( 'login', $cookie['user'] ) ) {
-                // update this user's WP groups based on AD
-                colbyTicket::setGroups($cookie['user'],$user->ID);
-                // error_log( "ColbyTicket: setting groups in ticketCheck" );
-
-                // log user in and reload this page
-                wp_set_auth_cookie( $user->ID );
-        
-                if ( preg_match( '/\/wp\-json\//', $_SERVER['REQUEST_URI'] ) == 0 ) {
-                echo '<meta http-equiv="refresh" content="0">';
-                die();
-                }
-            }
-
-            // strange, new Colby user...added them anyway
-            else {
-                $userarray['user_login'] = $cookie['user'];
-                $userarray['user_pass'] = 'XXXcolbyXXX';
-                $userarray['first_name'] = '';
-                $userarray['last_name'] = '';
-                $userarray['user_url'] = '';
-                $userarray['user_email'] = $cookie['user'].'\@colby.edu';
-                $userarray['description'] = '';
-                $userarray['aim'] = '';
-                $userarray['yim'] = '';
-                $userarray['jabber'] = '';
-                $userarray['display_name'] = '';
-                $userarray['organization'] = 'Colby';
-
-                // create the user, log them in and reload this page
-                wp_insert_user( $userarray );
-                // $user=get_userdatabylogin($cookie['user']) ;
-                $user = get_user_by( 'login', $_SERVER['PHP_AUTH_USER'] );
-                
-                // update this user's WP groups based on AD
-                colbyTicket::setGroups($cookie['user'],$user->ID);
-
-                // log user in and reload this page
-                wp_set_auth_cookie( $user->ID );
-
-                echo '<meta http-equiv="refresh" content="0">';
-                die();
-            }
-            }
-        }
-        }
-
-        return;
     }
+
+    // allow wp-cron.php requests from this server
+    if ( ( preg_match( '/wp-cron\.php\?doing_wp_cron=\d+$/', $_SERVER['REQUEST_URI'] ) ) && ( $_SERVER['REMOTE_ADDR'] == '137.146.30.193' ) ) {
+      // $user = get_userdatabylogin('wp-admin');
+      $user = get_user_by( 'login', $_SERVER['PHP_AUTH_USER'] );
+      set_current_user( $user->ID );
+      return;
+    }
+
+    if ( ($user_ID == '') && (array_key_exists('ColbyTicket',$_COOKIE)) ) {
+      // validate the authentication cookie
+      $cookie_items = explode('&', $_COOKIE['ColbyTicket']);
+      $cookie = array();
+      for ( $i = 0; $i < count($cookie_items);$i = $i + 2 ) {
+          $cookie[$cookie_items[$i]] = $cookie_items[$i + 1];
+      }
+
+      $user_agent = $_SERVER['HTTP_USER_AGENT'];
+      if ( $cookie['hash'] && $cookie['user'] && $cookie['time'] && $cookie['expires'] ) { 
+        $hash_vals = array($this->secret, $cookie['ip'], $cookie['time'], $cookie['expires'], $cookie['user'], $cookie['profile'], $cookie['type'], $user_agent);
+        $newhash = md5($this->secret . md5(join(':',$hash_vals)));
+
+          if ($cookie['type'] == 'Colby' ) {
+          // valid cookie, get wordpress info for this user
+          if ( $user = get_user_by( 'login', $cookie['user'] ) ) {
+              // update this user's WP groups based on AD
+              colbyTicket::setGroups($cookie['user'],$user->ID);
+
+              // log user in and reload this page
+              wp_set_auth_cookie( $user->ID );
+      
+              if ( preg_match( '/\/wp\-json\//', $_SERVER['REQUEST_URI'] ) == 0 ) {
+                echo '<meta http-equiv="refresh" content="0">';
+                die();
+              }
+          } else {
+            // strange, new Colby user...added them anyway
+            $userarray['user_login'] = $cookie['user'];
+            $userarray['user_pass'] = 'XXXcolbyXXX';
+            $userarray['first_name'] = '';
+            $userarray['last_name'] = '';
+            $userarray['user_url'] = '';
+            $userarray['user_email'] = $cookie['user'].'\@colby.edu';
+            $userarray['description'] = '';
+            $userarray['aim'] = '';
+            $userarray['yim'] = '';
+            $userarray['jabber'] = '';
+            $userarray['display_name'] = '';
+            $userarray['organization'] = 'Colby';
+
+            // create the user, log them in and reload this page
+            wp_insert_user( $userarray );
+            // $user=get_userdatabylogin($cookie['user']) ;
+            $user = get_user_by( 'login', $_SERVER['PHP_AUTH_USER'] );
+            
+            // update this user's WP groups based on AD
+            colbyTicket::setGroups($cookie['user'],$user->ID);
+
+            // log user in and reload this page
+            wp_set_auth_cookie( $user->ID );
+
+            echo '<meta http-equiv="refresh" content="0">';
+            die();
+          }
+        }
+      }
+    }
+    return;
+  }
 
   // authenticate the user based on their ColbyTicket cookie
   function authenticate() {
@@ -190,10 +186,7 @@ class ColbyTicket {
 
         $hash_vals = array($this->secret, $cookie['ip'], $cookie['time'], $cookie['expires'], $cookie['user'], $cookie['profile'], $cookie['type'], $user_agent);
         $newhash = md5($this->secret . md5(join(':',$hash_vals)));
-        // var_dump($hash_vals);
-        // var_dump($newhash);
-        // die($cookie['hash']);
-        // $newhash == $cookie['hash']
+
         if ($cookie['type'] === 'Colby' ) {
 
           // valid cookie, get wordpress info for this user
@@ -205,9 +198,6 @@ class ColbyTicket {
 
             if (isset( $_GET['redirect_to'] )) {
               wp_redirect( $_GET['redirect_to'] );
-              // This line didn't work right for pages that were the default
-              // page for the blog (replaced with the line above
-              //wp_redirect( preg_match( '/^http/', $_GET['redirect_to'] ) ? $_GET['redirect_to'] : site_url( $_GET['redirect_to'] ));
               die();
             }
 
@@ -302,13 +292,12 @@ class ColbyTicket {
         $data = ldap_get_entries($ds, $sr);
         $membership=$data[0]['memberof'];
     
-        for ($i = 0;$i < count($membership) - 1;$i++) {
-          list ($cn,$rest) = explode(',', $membership[$i], 2);
+        for ($i = 0; $i < count($membership) - 1; $i++) {
+          list ($cn, $rest) = explode(',', $membership[$i], 2);
           $group = substr($cn,3);
           if ( substr($group, strlen($group) - 3) == 'GRP' ) {
-            array_push($adgroups,$group);
-            // print "Group: $group<br />";
-            // error_log( "colbyTicket: ".$account." is a member of ".$group );
+            array_push($adgroups, $group);
+
           }
         }
       } catch( Exception $error ) {

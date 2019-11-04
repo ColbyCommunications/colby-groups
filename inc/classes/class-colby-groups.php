@@ -22,10 +22,11 @@ class ColbyGroups {
 	public function __construct() {
         add_action( 'delete_blog', [ $this, 'delete_blog' ] );
         add_action( 'wpmu_new_blog', [ $this, 'activate' ] );
-        add_action('init', [ $this, 'sidebar_plugin_register' ] );
+        add_action('init', [ $this, 'colby_groups_meta_register' ] );
         add_action( 'rest_api_init', [ $this,  'register_routes' ] );
         add_action( 'admin_enqueue_scripts', [ $this,  'colby_groups_script_enqueue' ] );
         add_action( 'wp_enqueue_scripts', [$this, 'colby_groups_script_enqueue' ]  );
+        add_action('updated_post_meta', [$this, 'colby_groups_change_meta'], 10, 4);
     }
 
 
@@ -68,8 +69,32 @@ class ColbyGroups {
         }
     }
 
-    /** SIDEBAR */
-    public static function sidebar_plugin_register() {
+    public static function colby_groups_change_meta($meta_id, $post_id, $meta_key='', $meta_value=''){
+        // Stop if not the correct meta key
+        if ( $meta_key !== 'colby_groups_meta_selected_groups' && $meta_key !== 'colby_groups_meta_restrict_to_groups') {
+            return false;
+        }
+
+        global $wpdb;
+        $dbprefix = $wpdb->base_prefix;
+        if ( get_current_blog_id() !== 1 ) { 
+            $dbprefix .= get_current_blog_id() . '_'; 
+        }
+        $post_meta = get_post_meta($post_id);
+        if ($post_meta['colby_groups_meta_restrict_to_groups']) {
+            $selected_groups = $post_meta['colby_groups_meta_selected_groups'];
+            $wpdb->delete( $dbprefix . "cc_group_roles", array( 'post_id' => $post_id ));
+            foreach ( $selected_groups as $newgroup ) {
+                $newgroup_decoded = json_decode($newgroup)[0];
+                $data = array( 'group_id' => $newgroup_decoded->ID,
+                                'roles' => serialize(array($newgroup_decoded->role)),
+                                'post_id' => $post_id );
+                $wpdb->insert( $dbprefix . "cc_group_roles", $data, array( '%d', '%s' ) );
+            }
+        }
+    }
+
+    public static function colby_groups_meta_register() {
         register_post_meta(
             '',
             'colby_groups_meta_restrict_to_groups',
@@ -217,9 +242,8 @@ class ColbyGroups {
         $params = $request->get_params();
         update_option("site_groups", $request['groups']);
         
-        foreach ( $request['groups'] as $delgroup ) {
-            $wpdb->delete( $dbprefix . "cc_group_roles", array( 'group_id' => $delgroup['ID'] ) );
-        }
+        $wpdb->delete( $dbprefix . "cc_group_roles", array( 'post_id' => 0 ) );
+        
 
         foreach ( $request['groups'] as $newgroup ) {
             $data = array( 'group_id' => $newgroup['ID'],
