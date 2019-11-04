@@ -153,40 +153,44 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                                 onSuggestionSelected={this.onSuggestionSelect}
                             />
                         </div>
-                        {selectedGroups.length > 0 && (
-                            <div style={{ width: '50%' }}>
-                                <table className={style.colbyGroupsPostTable}>
-                                    <thead>
-                                        <tr
-                                            style={{
-                                                backgroundColor: '#426a92',
-                                                color: '#fff',
-                                            }}
-                                        >
-                                            <th>Name</th>
-                                            <th>Role</th>
-                                            <th>&nbsp;</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {selectedGroups.map(group => (
+                        <div>
+                            {selectedGroups.length > 0 && (
+                                <div style={{ width: '50%' }}>
+                                    <table
+                                        className={style.colbyGroupsPostTable}
+                                    >
+                                        <thead>
                                             <tr
-                                                key={group.group_name}
                                                 style={{
-                                                    backgroundColor: '#fff',
+                                                    backgroundColor: '#426a92',
+                                                    color: '#fff',
                                                 }}
                                             >
-                                                <td>{group.group_name}</td>
-                                                <td>
-                                                    <select
-                                                        onBlur={this.handleRoleChange.bind(
-                                                            null,
-                                                            group
-                                                        )}
-                                                        value={group.role}
-                                                    >
-                                                        {Object.keys(roles).map(
-                                                            key => (
+                                                <th>Name</th>
+                                                <th>Role</th>
+                                                <th>&nbsp;</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {selectedGroups.map(group => (
+                                                <tr
+                                                    key={group.group_name}
+                                                    style={{
+                                                        backgroundColor: '#fff',
+                                                    }}
+                                                >
+                                                    <td>{group.group_name}</td>
+                                                    <td>
+                                                        <select
+                                                            onBlur={this.handleRoleChange.bind(
+                                                                null,
+                                                                group
+                                                            )}
+                                                            value={group.role}
+                                                        >
+                                                            {Object.keys(
+                                                                roles
+                                                            ).map(key => (
                                                                 <option
                                                                     value={key}
                                                                     key={key}
@@ -197,41 +201,41 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                                                                         ].name
                                                                     }
                                                                 </option>
-                                                            )
-                                                        )}
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        className={
-                                                            style.deleteBtn
-                                                        }
-                                                        type="button"
-                                                        onClick={this.removeGroup.bind(
-                                                            this,
-                                                            group.ID
-                                                        )}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                <div style={{ marginTop: '10px' }}>
-                                    <button
-                                        type="button"
-                                        disabled={selectedGroups.length === 0}
-                                        className={style.saveBtn}
-                                        style={{ float: 'right' }}
-                                        onClick={this.handleSubmit}
-                                    >
-                                        Save
-                                    </button>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            className={
+                                                                style.deleteBtn
+                                                            }
+                                                            type="button"
+                                                            onClick={this.removeGroup.bind(
+                                                                this,
+                                                                group.ID
+                                                            )}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
+                            )}
+                            <div style={{ marginTop: '10px' }}>
+                                <button
+                                    type="button"
+                                    disabled={selectedGroups.length === 0}
+                                    className={style.saveBtn}
+                                    style={{ float: 'right' }}
+                                    onClick={this.handleSubmit}
+                                >
+                                    Save
+                                </button>
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
             </div>
