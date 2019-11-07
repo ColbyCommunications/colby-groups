@@ -20,6 +20,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
         filter: '',
         suggestions: [],
         roles: {},
+        isDirty: false,
     };
 
     componentDidMount = () => {
@@ -56,9 +57,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
 
         return inputLength === 0
             ? []
-            : groupData.filter(group =>
-                  group.group_name.toLowerCase().includes(inputValue)
-              );
+            : groupData.filter(group => group.group_name.toLowerCase().includes(inputValue));
     };
 
     onSuggestionSelect = (event, { suggestionValue }) => {
@@ -74,6 +73,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
         this.setState({
             filter: '',
             selectedGroups: newGroups,
+            isDirty: true,
         });
     };
 
@@ -93,17 +93,20 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
             method: 'POST',
             data: { groups: selectedGroups },
         });
+
+        this.setState({
+            isDirty: false,
+        });
     };
 
     handleRoleChange = (group, event) => {
         const { selectedGroups } = this.state;
-        const groupObj = selectedGroups.find(
-            g => g.group_name === group.group_name
-        );
+        const groupObj = selectedGroups.find(g => g.group_name === group.group_name);
         groupObj.role = event.target.value;
 
         this.setState({
             selectedGroups,
+            isDirty: true,
         });
     };
 
@@ -115,6 +118,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
             suggestions,
             selectedGroups,
             roles,
+            isDirty,
         } = this.state;
         return (
             <div style={{ paddingTop: '40px' }}>
@@ -138,9 +142,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                                     });
                                 }}
                                 getSuggestionValue={group => group.group_name}
-                                renderSuggestion={group => (
-                                    <div>{group.group_name}</div>
-                                )}
+                                renderSuggestion={group => <div>{group.group_name}</div>}
                                 inputProps={{
                                     placeholder: 'Group name',
                                     value: filter,
@@ -156,9 +158,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                         <div>
                             {selectedGroups.length > 0 && (
                                 <div style={{ width: '50%' }}>
-                                    <table
-                                        className={style.colbyGroupsPostTable}
-                                    >
+                                    <table className={style.colbyGroupsPostTable}>
                                         <thead>
                                             <tr
                                                 style={{
@@ -188,27 +188,16 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                                                             )}
                                                             value={group.role}
                                                         >
-                                                            {Object.keys(
-                                                                roles
-                                                            ).map(key => (
-                                                                <option
-                                                                    value={key}
-                                                                    key={key}
-                                                                >
-                                                                    {
-                                                                        roles[
-                                                                            key
-                                                                        ].name
-                                                                    }
+                                                            {Object.keys(roles).map(key => (
+                                                                <option value={key} key={key}>
+                                                                    {roles[key].name}
                                                                 </option>
                                                             ))}
                                                         </select>
                                                     </td>
                                                     <td>
                                                         <button
-                                                            className={
-                                                                style.deleteBtn
-                                                            }
+                                                            className={style.deleteBtn}
                                                             type="button"
                                                             onClick={this.removeGroup.bind(
                                                                 this,
@@ -227,7 +216,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
                             <div style={{ marginTop: '10px' }}>
                                 <button
                                     type="button"
-                                    disabled={selectedGroups.length === 0}
+                                    disabled={!isDirty}
                                     className={style.saveBtn}
                                     style={{ float: 'right' }}
                                     onClick={this.handleSubmit}

@@ -118,78 +118,80 @@ class Capabilities {
     public static function ccg_access_check() {
         global $wpdb;
         global $post;
-
-        /* get the current user's ID */
-        $user_ID = get_current_user_id();
-        if ( !is_admin() ) {
-            // get groups for individual post
-            $is_post_restricted = get_post_meta( $post->ID, 'colby_groups_meta_restrict_to_groups', true);
-            $post_groups = get_post_meta( $post->ID, 'colby_groups_meta_selected_groups', true);
-            $is_site_restricted = CCG_BLOG_PUBLIC_COLBY_ONLY === get_option( 'blog_public' );
-            
-            if ($is_site_restricted ) {
-                /* This blog is marked as "Colby Groups Only" */
-                // no cookie, they need to login
-                if ( 0 === array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
-                    $protocol = $_SERVER['SERVER_PORT'] == '80' ? 'http' : 'https';
-                    wp_redirect( $protocol . '://' . $_SERVER['SERVER_NAME'] . '/ColbyMaster/login/?' . $_SERVER['SCRIPT_URI'] );
-                    exit();
-                } else {
-                    /* error_log( "CCG: can this user access this Colby Only blog???" ); */
-
-                    $ad_read_ok = self::ad_user_can_read( $user_ID, $post_groups, $post->ID );
-                    $cc_read_ok = self::cc_user_can_read( $user_ID, $post_groups, $post->ID );
-                    $read_ok = $ad_read_ok + $cc_read_ok;
-
-                    /* for each role, does this role have the read post capability? */
-
-                    /* if no read post capability for all groups/roles then redirect to the 403 page */
-                    if ( 0 == $read_ok ) {
-                        header( 'Status: 403 Forbidden', true, 403 );
-                        
-                        // need to response 403 and have current theme show page
-                        exit();
-                    }
-                }
-            } else if ( $is_post_restricted ) {
-                // die("here");
-                /* check this post, its parent page might be private */
+        if ("ON" === getenv('LANDO') || "https://". $_SERVER['HTTP_HOST'] === "https://" . getenv('PRIMARY_DOMAIN') || (false !== getenv('PLATFORM_RELATIONSHIPS' && true === getenv('HAS_PROD')))) {
+            /* get the current user's ID */
+            $user_ID = get_current_user_id();
+            if ( !is_admin() ) {
+                // get groups for individual post
+                $is_post_restricted = get_post_meta( $post->ID, 'colby_groups_meta_restrict_to_groups', true);
+                $post_groups = get_post_meta( $post->ID, 'colby_groups_meta_selected_groups', true);
+                $is_site_restricted = CCG_BLOG_PUBLIC_COLBY_ONLY === get_option( 'blog_public' );
                 
-                list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
+                if ($is_site_restricted ) {
+                    /* This blog is marked as "Colby Groups Only" */
+                    // no cookie, they need to login
+                    if ( 0 === array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
+                        // if LANDO or PROD or Platform dev environment with prod environment
+                        $protocol = $_SERVER['SERVER_PORT'] == '80' ? 'http' : 'https';
+                        wp_redirect( $protocol . '://' . $_SERVER['SERVER_NAME'] . '/ColbyMaster/login/?' . $_SERVER['SCRIPT_URI'] );
+                        exit();
+                    } else {
+                        /* error_log( "CCG: can this user access this Colby Only blog???" ); */
 
-                if ( true === $parent_limit ) {
-                    
-                    $ad_read_ok = self::ad_user_can_read( $user_ID, $parent_limit, $parent_id );
-                    $cc_read_ok = self::cc_user_can_read( $user_ID, $parent_limit, $parent_id );
-                    $read_ok = $ad_read_ok + $cc_read_ok;
-                    
-                    /* if no read post capability for all groups/roles then redirect to the Login or 403 page */
-                    if ( 0 == $read_ok ) {
-                        if ( 0 == array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
-                            /* if the user is not authenticated, send them to the login page */
-                            $redirect = $_SERVER['REQUEST_URI'];
-                            wp_redirect("https://www.colby.edu/ColbyMaster/login/?https://" . $_SERVER['HTTP_HOST'] . $redirect);
-                            exit();
-                        } else {
+                        $ad_read_ok = self::ad_user_can_read( $user_ID, $post_groups, $post->ID );
+                        $cc_read_ok = self::cc_user_can_read( $user_ID, $post_groups, $post->ID );
+                        $read_ok = $ad_read_ok + $cc_read_ok;
+
+                        /* for each role, does this role have the read post capability? */
+
+                        /* if no read post capability for all groups/roles then redirect to the 403 page */
+                        if ( 0 == $read_ok ) {
                             header( 'Status: 403 Forbidden', true, 403 );
+                            
+                            // need to response 403 and have current theme show page
                             exit();
                         }
                     }
-                } else {
+                } else if ( $is_post_restricted ) {
+                    // die("here");
+                    /* check this post, its parent page might be private */
                     
-                    $ad_read_ok = self::ad_user_can_read( $user_ID, $is_post_restricted, $post->ID );
-                    $cc_read_ok = self::cc_user_can_read( $user_ID, $is_post_restricted, $post->ID );
-                    $read_ok = $ad_read_ok + $cc_read_ok;
-                    /* if no read post capability for all groups/roles then redirect to the Login or 403 page */
-                    if ( 0 == $read_ok ) {
-                        if ( 0 == array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
-                            /* if the user is not authenticated, send them to the login page */
-                            $redirect = $_SERVER['REQUEST_URI'];
-                            wp_redirect("https://www.colby.edu/ColbyMaster/login/?https://" . $_SERVER['HTTP_HOST'] . $redirect);
-                            exit();
-                        } else {
-                            header( 'Status: 403 Forbidden', true, 403 );
-                            exit();
+                    list ( $parent_limit, $parent_id ) = self::parent_limit( $post->post_parent );
+
+                    if ( true === $parent_limit ) {
+                        
+                        $ad_read_ok = self::ad_user_can_read( $user_ID, $parent_limit, $parent_id );
+                        $cc_read_ok = self::cc_user_can_read( $user_ID, $parent_limit, $parent_id );
+                        $read_ok = $ad_read_ok + $cc_read_ok;
+                        
+                        /* if no read post capability for all groups/roles then redirect to the Login or 403 page */
+                        if ( 0 == $read_ok ) {
+                            if ( 0 == array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
+                                /* if the user is not authenticated, send them to the login page */
+                                $redirect = $_SERVER['REQUEST_URI'];
+                                wp_redirect("https://www.colby.edu/ColbyMaster/login/?https://" . $_SERVER['HTTP_HOST'] . $redirect);
+                                exit();
+                            } else {
+                                header( 'Status: 403 Forbidden', true, 403 );
+                                exit();
+                            }
+                        }
+                    } else {
+                        
+                        $ad_read_ok = self::ad_user_can_read( $user_ID, $is_post_restricted, $post->ID );
+                        $cc_read_ok = self::cc_user_can_read( $user_ID, $is_post_restricted, $post->ID );
+                        $read_ok = $ad_read_ok + $cc_read_ok;
+                        /* if no read post capability for all groups/roles then redirect to the Login or 403 page */
+                        if ( 0 == $read_ok ) {
+                            if ( 0 == array_key_exists( 'ColbyTicket', $_COOKIE ) ) {
+                                /* if the user is not authenticated, send them to the login page */
+                                $redirect = $_SERVER['REQUEST_URI'];
+                                wp_redirect("https://www.colby.edu/ColbyMaster/login/?https://" . $_SERVER['HTTP_HOST'] . $redirect);
+                                exit();
+                            } else {
+                                header( 'Status: 403 Forbidden', true, 403 );
+                                exit();
+                            }
                         }
                     }
                 }
