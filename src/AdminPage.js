@@ -83,6 +83,7 @@ const ColbyGroupsAdminPage = class ColbyGroupsAdminPage extends Component {
         this.setState({
             filter: '',
             selectedGroups,
+            isDirty: true,
         });
     };
 
