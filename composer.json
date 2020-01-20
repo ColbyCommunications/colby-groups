@@ -23,10 +23,5 @@
         "wp-coding-standards/wpcs": "^2.1",
         "automattic/vipwpcs": "^2.0",
         "dealerdirect/phpcodesniffer-composer-installer": "*"
-    },
-    "autoload": {
-        "psr-4": {
-            "ColbyCollege\\Plugins\\ColbyGroups\\": "inc/classes"
-        }
     }
 }
