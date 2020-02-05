@@ -15,11 +15,11 @@
     },
     "husky": {
         "hooks": {
-            "pre-commit": "colby-package-format --staged --withphp && colby-package-lint --staged --withphp && colby-package-test --staged --withphp"
+            "pre-commit": "colby-package-format --staged --withphp && colby-package-lint --staged --withphp"
         }
     },
     "dependencies": {
-        "colby-loader": "^2.0.1",
+        "@colbycommunications/colby-loader": "2.0.2",
         "lodash": "^4.17.5",
         "prop-types": "^15.5.10",
         "react": "^16.0.0",
@@ -29,9 +29,9 @@
     "devDependencies": {
         "autoprefixer": "^9.6.1",
         "babel-loader": "^8.0.6",
-        "babel-preset-colby": "^1.0.4",
+        "@colbycommunications/babel-preset-colby": "1.0.6",
         "clean-webpack-plugin": "^3.0.0",
-        "colby-package": "^2.1.12",
+        "@colbycommunications/colby-package": "^2.1.14",
         "css-loader": "^3.2.0",
         "mini-css-extract-plugin": "^0.8.0",
         "node-sass": "^4.12.0",
