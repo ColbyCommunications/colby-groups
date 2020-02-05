@@ -11,6 +11,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1
     - name: Install NPM Dependencies
-      uses: npm run install
+      run: npm run install
     - name: Run Jest
-      uses: npm run test
+      run: npm run testjs
