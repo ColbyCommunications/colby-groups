@@ -11,10 +11,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1
     - name: Authenticate GitHub Package Registry
-      run: echo "//npm.pkg.github.com/:_authToken=e95d8b5943038cb9f64d0ed4c150835a2a853c0b" > ~/.npmrc
+      run: echo "//npm.pkg.github.com/:_authToken=98c3fe70784634ec4df2e92665d035f7d89b35b7" > ~/.npmrc
     - name: Install NPM Dependencies
       run: npm install
       env:
-        NODE_AUTH_TOKEN: 'e95d8b5943038cb9f64d0ed4c150835a2a853c0b'
+        NODE_AUTH_TOKEN: '98c3fe70784634ec4df2e92665d035f7d89b35b7'
     - name: Run Jest
       run: npm run testjs
