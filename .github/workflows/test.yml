@@ -10,13 +10,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v1
-    - name: Setup Node
-      uses: actions/setup-node@v1
-      with:
-          node-version: 10
-          registry-url: 'https://npm.pkg.github.com/ColbyCommunications'
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.WEBMASTER_SECRET }}
+    - name: Authenticate GitHub Package Registry
+      run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > ~/.npmrc
     - name: Install NPM Dependencies
       run: npm install
       env:
