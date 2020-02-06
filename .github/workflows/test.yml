@@ -11,10 +11,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1
     - name: Authenticate GitHub Package Registry
-      run: echo -e "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}\nregistry=https://npm.pkg.github.com/ColbyCommunications" > ~/.npmrc
+      run: echo "//npm.pkg.github.com/:_authToken=e95d8b5943038cb9f64d0ed4c150835a2a853c0b" > ~/.npmrc
     - name: Install NPM Dependencies
       run: npm install
       env:
-        NODE_AUTH_TOKEN: ${{ secrets.WEBMASTER_SECRET }}
+        NODE_AUTH_TOKEN: 'e95d8b5943038cb9f64d0ed4c150835a2a853c0b'
     - name: Run Jest
       run: npm run testjs
