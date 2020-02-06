@@ -25,7 +25,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v1
-      name: Install Composer Dependencies
+    - name: Install Composer Dependencies
       run: composer install
     - name: PHPUnit
       run: npm run testphp
