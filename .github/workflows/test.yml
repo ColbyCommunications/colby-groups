@@ -13,6 +13,6 @@ jobs:
     - name: Install NPM Dependencies
       run: npm install
       env:
-        GITHUB_TOKEN: ${{ secrets.github_token }}
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }
     - name: Run Jest
       run: npm run testjs
