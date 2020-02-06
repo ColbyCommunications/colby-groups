@@ -11,7 +11,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1
     - name: Authenticate GitHub Package Registry
-      run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > ~/.npmrc
+      run: echo -e "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}\nregistry=https://npm.pkg.github.com/ColbyCommunications" > ~/.npmrc
     - name: Install NPM Dependencies
       run: npm install
       env:
