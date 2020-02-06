@@ -12,6 +12,8 @@ jobs:
       uses: actions/checkout@v1
     - name: Authenticate GitHub Package Registry
       run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.WEBMASTER_SECRET }}" > ~/.npmrc
+    - name: Check
+      run: cat ~/.npmrc
     - name: Install NPM Dependencies
       run: npm install
       env:
