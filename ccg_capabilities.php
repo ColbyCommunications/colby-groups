@@ -1,6 +1,6 @@
 <?php
 
-require_once( ABSPATH . 'wp-content/plugins/colbyTicket.php' );
+require_once( ABSPATH . '../wp-content/plugins/colbyTicket.php' );
 
 if ( ! class_exists('CCG_Capabilities') ) {
 	class CCG_Capabilities {
